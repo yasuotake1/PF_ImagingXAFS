@@ -8,6 +8,7 @@ import ij.WindowManager;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 public class RGB_Interactive implements PlugIn, DialogListener {
@@ -23,21 +24,28 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 	public void run(String arg) {
 		previewWidth = ImagingXAFSCommon.getCurrentScreenWidth() / 3;
 
-		listId = ImagingXAFSCommon.getDataIds(false);
-		if(listId.length < 2) {
-			IJ.error("Could not find open data image(s).");
+		Integer[] listIdTemp = ImagingXAFSCommon.getDataIds(false);
+		if (listIdTemp.length < 2) {
+			IJ.error("Could not find two or more data images.");
 			return;
 		}
-		String[] listTitle = ImagingXAFSCommon.getDataTitles(false);
-		ipR = WindowManager.getImage(listId[0]).getProcessor().resize(previewWidth).convertToByte(true);
-		ipG = WindowManager.getImage(listId[1]).getProcessor().resize(previewWidth).convertToByte(true);
-		ipB = WindowManager.getImage(listId[2]).getProcessor().resize(previewWidth).convertToByte(true);
-		impPreview = new ImagePlus("Preview", ipR.convertToRGB());
+		listId = new Integer[listIdTemp.length + 1];
+		System.arraycopy(listIdTemp, 0, listId, 1, listIdTemp.length);
+		listId[0] = 0;
+		String[] listTitleTemp = ImagingXAFSCommon.getDataTitles(false);
+		String[] listTitle = new String[listTitleTemp.length + 1];
+		System.arraycopy(listTitleTemp, 0, listTitle, 1, listTitleTemp.length);
+		listTitle[0] = "None";
 
 		GenericDialog gd = new GenericDialog("Make RGB phase map");
-		gd.addChoice("Red image: ", listTitle, listTitle[0]);
-		gd.addChoice("Green image: ", listTitle, listTitle[1]);
-		gd.addChoice("Blue image: ", listTitle, listTitle[2]);
+		gd.addChoice("Red image: ", listTitle, listTitle[1]);
+		gd.addChoice("Green image: ", listTitle, listTitle[2]);
+		gd.addChoice("Blue image: ", listTitle, listTitle[0]);
+		ipR = WindowManager.getImage(listId[1]).getProcessor().resize(previewWidth).convertToByte(true);
+		ipG = WindowManager.getImage(listId[2]).getProcessor().resize(previewWidth).convertToByte(true);
+		ipB = null;
+		checkNullImages();
+		impPreview = new ImagePlus("Preview", ipR.convertToRGB());
 		gd.addRadioButtonGroup("Background: ", choiceBg, 1, 2, choiceBg[0]);
 		gd.addSlider("Gamma: ", 0.5, 2, 1.0, 0.05);
 		gd.addCheckbox("Preview ", false);
@@ -49,11 +57,14 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 			return;
 
 		int idR = listId[gd.getNextChoiceIndex()];
+		ipR = (idR == 0) ? null : WindowManager.getImage(idR).getProcessor().convertToByte(true);
 		int idG = listId[gd.getNextChoiceIndex()];
+		ipG = (idG == 0) ? null : WindowManager.getImage(idG).getProcessor().convertToByte(true);
 		int idB = listId[gd.getNextChoiceIndex()];
-		ipR = WindowManager.getImage(idR).getProcessor().convertToByte(true);
-		ipG = WindowManager.getImage(idG).getProcessor().convertToByte(true);
-		ipB = WindowManager.getImage(idB).getProcessor().convertToByte(true);
+		ipB = (idB == 0) ? null : WindowManager.getImage(idB).getProcessor().convertToByte(true);
+		if (!checkNullImages()) {
+			return;
+		}
 		if (!areSameSize()) {
 			IJ.error("Selected images have different size.");
 			return;
@@ -84,20 +95,27 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 				|| e.getSource() == gd.getChoices().get(2)) {
 			if (impPreview != null)
 				impPreview.close();
-			ipR = WindowManager.getImage(listId[gd.getNextChoiceIndex()]).getProcessor().resize(previewWidth)
-					.convertToByte(true);
-			ipG = WindowManager.getImage(listId[gd.getNextChoiceIndex()]).getProcessor().resize(previewWidth)
-					.convertToByte(true);
-			ipB = WindowManager.getImage(listId[gd.getNextChoiceIndex()]).getProcessor().resize(previewWidth)
-					.convertToByte(true);
+			int idR = listId[gd.getNextChoiceIndex()];
+			ipR = (idR == 0) ? null
+					: WindowManager.getImage(idR).getProcessor().resize(previewWidth).convertToByte(true);
+			int idG = listId[gd.getNextChoiceIndex()];
+			ipG = (idG == 0) ? null
+					: WindowManager.getImage(idG).getProcessor().resize(previewWidth).convertToByte(true);
+			int idB = listId[gd.getNextChoiceIndex()];
+			ipB = (idB == 0) ? null
+					: WindowManager.getImage(idB).getProcessor().resize(previewWidth).convertToByte(true);
+			if (!checkNullImages()) {
+				return false;
+			}
 			impPreview = new ImagePlus("Preview", ipR.convertToRGB());
 		}
 		boolean isWhiteBg = gd.getNextRadioButton() == choiceBg[0];
 		double gamma = gd.getNextNumber();
 
 		if (gd.getNextBoolean()) {
-			if (!areSameSize())
+			if (!areSameSize()) {
 				return false;
+			}
 			setGammaImagePixels(gamma, isWhiteBg, (int[]) impPreview.getProcessor().getPixels());
 			if (impPreview.isVisible())
 				impPreview.updateAndDraw();
@@ -114,9 +132,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		int r;
 		int g;
 		int b;
-		int bg = 0;
-		if (isWhiteBg)
-			bg = 255;
+		int bg = isWhiteBg ? 255 : 0;
 
 		byte[] pixelsR = (byte[]) ipR.getPixels();
 		byte[] pixelsG = (byte[]) ipG.getPixels();
@@ -132,9 +148,33 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		}
 	}
 
+	private boolean checkNullImages() {
+		ImageProcessor ipSrc = (ipR != null) ? ipR : ((ipG != null) ? ipG : ipB);
+		if (ipSrc == null) {
+			return false;
+		}
+		if (ipR == null) {
+			ipR = getEmptyImageProcessor(ipSrc);
+		}
+		if (ipG == null) {
+			ipG = getEmptyImageProcessor(ipSrc);
+		}
+		if (ipB == null) {
+			ipB = getEmptyImageProcessor(ipSrc);
+		}
+		return true;
+	}
+
 	private boolean areSameSize() {
 		return ipR.getWidth() == ipG.getWidth() && ipG.getWidth() == ipB.getWidth()
 				&& ipR.getHeight() == ipG.getHeight() && ipG.getHeight() == ipB.getHeight();
 	}
-	
+
+	private ImageProcessor getEmptyImageProcessor(ImageProcessor ipSrc) {
+		int wid = ipSrc.getWidth();
+		int hei = ipSrc.getHeight();
+		byte[] pixels = new byte[wid * hei];
+		return new ByteProcessor(wid, hei, pixels, null);
+	}
+
 }

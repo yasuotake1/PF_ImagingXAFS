@@ -21,7 +21,7 @@ import ij.plugin.Raw;
 
 public class OrcaCommon implements PlugIn {
 	public static int dcmDirection = 0;// Down = 0, Up = 1.
-	public static double detectorPosition = 29500;// from source point in mm.
+	public static double detectorPosition = 30800;// from source point in mm.
 	public static double pixelSize = 4.6;// in um.
 	public static double dcmDistance = 25;// height distance between 1st and 2nd crystals in mm.
 	public static int width = 2048;
