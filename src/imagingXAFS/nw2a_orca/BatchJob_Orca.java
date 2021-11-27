@@ -18,6 +18,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.WaitForUserDialog;
 import ij.plugin.PlugIn;
+import ij.plugin.filter.RankFilters;
 
 public class BatchJob_Orca implements PlugIn {
 
@@ -26,21 +27,25 @@ public class BatchJob_Orca implements PlugIn {
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Batch job: NW2A ImagingXAFS");
-		gd.addFileField("First image data file (9809 format): ", "");
-		gd.addFileField("Reference data file (9809 format): ", "");
-		gd.addChoice("Binning: ", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
-		gd.addMessage("Normalization");
-		gd.addNumericField("Pre-edge from: ", ImagingXAFSCommon.normalizationParam[0], 2, 7, "eV");
-		gd.addNumericField("to: ", ImagingXAFSCommon.normalizationParam[1], 2, 7, "eV");
-		gd.addNumericField("Post-edge from: ", ImagingXAFSCommon.normalizationParam[2], 2, 7, "eV");
-		gd.addNumericField("to: ", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
-		gd.addNumericField("Filter threshold: ", 2);
-		gd.addNumericField("E0 plot range minimum: ", ImagingXAFSCommon.e0Min, 2, 7, "eV");
-		gd.addNumericField("maximum: ", ImagingXAFSCommon.e0Max, 2, 7, "eV");
-		gd.addMessage("Singular value decomposition");
+		gd.addMessage("Source:");
+		gd.addFileField("First image data file (9809 format)", "");
+		gd.addFileField("Reference data file (9809 format)", "");
+		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
+		gd.addMessage("Filter:");
+		gd.addCheckbox("Apply median filter", false);
+		gd.addNumericField("Radius", 1.0, 1);
+		gd.addMessage("Normalization:");
+		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 7, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 7, "eV");
+		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 7, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
+		gd.addNumericField("Filter threshold", 2);
+		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 7, "eV");
+		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 7, "eV");
+		gd.addMessage("Singular value decomposition:");
 		gd.addCheckbox("Do SVD", true);
 		gd.addCheckbox("Clip at zero", true);
-		gd.addMessage("Postprocess");
+		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Copy files for stitching", true);
 		gd.addCheckbox("Perform grid stitching", true);
 		gd.showDialog();
@@ -53,6 +58,8 @@ public class BatchJob_Orca implements PlugIn {
 				|| !Files.exists(getPathRef9809()))
 			return;
 		String strBinning = gd.getNextChoice();
+		boolean filter = gd.getNextBoolean();
+		double radius = gd.getNextNumber();
 		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
@@ -103,6 +110,7 @@ public class BatchJob_Orca implements PlugIn {
 		int rep = getRepetition();
 		Path dirStitch = Paths.get(getImg9809Root(), "stitching");
 		ArrayList<String> sufList = new ArrayList<String>();
+		RankFilters rf = new RankFilters();
 		Stitching sti = new Stitching();
 
 		if (copy) {
@@ -134,6 +142,16 @@ public class BatchJob_Orca implements PlugIn {
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
 			impCorrected = Load_OrcaStack.GetCorrectedStack(impCrop);
+			if (filter) {
+				IJ.log("Applying filter...");
+				int slc = impCorrected.getNSlices();
+				for (int j = 1; j <= slc; j++) {
+					IJ.showStatus("Applying filter " + String.valueOf(j) + "/" + String.valueOf(slc));
+					impCorrected.setSlice(i);
+					rf.rank(impCorrected.getProcessor(), radius, RankFilters.MEDIAN);
+				}
+				IJ.log("\\Update:Applying filter...done.");
+			}
 			impCorrected.show();
 			Normalization.Normalize(impCorrected, threshold, false, true);
 			impNorm = Normalization.impNorm;
