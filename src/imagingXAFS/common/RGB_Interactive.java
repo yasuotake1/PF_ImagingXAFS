@@ -72,9 +72,9 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		String strBg = gd.getNextRadioButton();
 		double gamma = gd.getNextNumber();
 
-		String nameResult = "R_" + ((idR == 0) ? "None" : WindowManager.getImage(idR).getTitle().replace(".tif", ""));
-		nameResult += "_G_" + ((idG == 0) ? "None" : WindowManager.getImage(idG).getTitle().replace(".tif", ""));
-		nameResult += "_B_" + ((idB == 0) ? "None" : WindowManager.getImage(idB).getTitle().replace(".tif", ""));
+		String nameResult = "R_" + ((idR == 0) ? listTitle[0] : WindowManager.getImage(idR).getTitle().replace(".tif", ""));
+		nameResult += "_G_" + ((idG == 0) ? listTitle[0] : WindowManager.getImage(idG).getTitle().replace(".tif", ""));
+		nameResult += "_B_" + ((idB == 0) ? listTitle[0] : WindowManager.getImage(idB).getTitle().replace(".tif", ""));
 		nameResult += "_" + strBg + ".png";
 
 		ImagePlus impResult = new ImagePlus(nameResult, ipR.convertToRGB());

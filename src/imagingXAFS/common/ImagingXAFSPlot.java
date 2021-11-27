@@ -1,14 +1,7 @@
 package imagingXAFS.common;
 
-import java.awt.BorderLayout;
-import java.awt.Choice;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Label;
-import java.awt.Panel;
-import java.awt.TextField;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -253,9 +246,9 @@ public class ImagingXAFSPlot implements PlugIn {
 				"Normalized", "Linear combination of standards" };
 		private static int selectedIndexOld;
 		private final Label labelPreStart = new Label("Pre-edge from");
-		private final Label labelPreEnd = new Label("  to");
-		private final Label labelPostStart = new Label("       Post-edge from");
-		private final Label labelPostEnd = new Label("  to");
+		private final Label labelPreEnd = new Label("   to");
+		private final Label labelPostStart = new Label("      Post-edge from");
+		private final Label labelPostEnd = new Label("   to");
 		private static TextField tfPreStart, tfPreEnd, tfPostStart, tfPostEnd;
 
 		ImagingXAFSPlotWindow(Plot plot, boolean enableNormalization) {
@@ -292,7 +285,6 @@ public class ImagingXAFSPlot implements PlugIn {
 			pack();
 
 			selectedIndexOld = 0;
-
 		}
 
 		public void itemStateChanged(ItemEvent e) {
@@ -349,7 +341,6 @@ public class ImagingXAFSPlot implements PlugIn {
 				}
 			}
 			selectedIndexOld = selectedIndex;
-
 		}
 
 		static Double getValue(String str) {
@@ -400,5 +391,5 @@ public class ImagingXAFSPlot implements PlugIn {
 			return d;
 		}
 	}
-	
+
 }

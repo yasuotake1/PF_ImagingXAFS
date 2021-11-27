@@ -50,6 +50,7 @@ public class Load_OrcaStack implements PlugIn {
 		ImageStack stack = null;
 		FileInfo fi = null;
 		ImagePlus impImg, impRef, impTgt;
+		ImageCalculator ic = new ImageCalculator();
 		while (Files.exists(pathImg)) {
 			IJ.showStatus("Loading image " + String.format("%03d", i));
 			IJ.showProgress(i, energies.length);
@@ -63,7 +64,7 @@ public class Load_OrcaStack implements PlugIn {
 
 			if (pathRef != null && Files.exists(pathRef)) {
 				impRef = OrcaCommon.LoadOrca(pathRef, prop);
-				impTgt = ImageCalculator.run(impRef, impImg, "divide create 32-bit");
+				impTgt = ic.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i])
 						+ " eV)");
 				impTgt.getProcessor().log();

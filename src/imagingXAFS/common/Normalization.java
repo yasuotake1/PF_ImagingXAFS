@@ -10,7 +10,7 @@ import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.NewImage;
-import ij.io.OpenDialog;
+import ij.io.FileInfo;
 import ij.measure.CurveFitter;
 import ij.plugin.LutLoader;
 import ij.plugin.PlugIn;
@@ -164,9 +164,10 @@ public class Normalization implements PlugIn {
 		impDmut.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_Dmut.tif");
 		impDmut.show();
 		if (autoSave) {
-			IJ.saveAsTiff(impNorm, OpenDialog.getDefaultDirectory() + impNorm.getTitle());
-			IJ.saveAsTiff(impE0, OpenDialog.getDefaultDirectory() + impE0.getTitle());
-			IJ.saveAsTiff(impDmut, OpenDialog.getDefaultDirectory() + impDmut.getTitle());
+			FileInfo fi = impSrc.getOriginalFileInfo();
+			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
+			IJ.saveAsTiff(impE0, fi.directory + impE0.getTitle());
+			IJ.saveAsTiff(impDmut, fi.directory + impDmut.getTitle());
 		}
 	}
 
