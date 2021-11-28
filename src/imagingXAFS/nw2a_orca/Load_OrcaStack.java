@@ -121,6 +121,7 @@ public class Load_OrcaStack implements PlugIn {
 		double[] correctedEnergies = new double[nSlices];
 		OrcaProps prop = OrcaCommon.ReadProps();
 		ImagePlus impTgt = impSrc.duplicate();
+		impTgt.setFileInfo(impSrc.getOriginalFileInfo());
 		double correctedIdx;
 		impSrc.hide();
 		float[] data1 = new float[Dimensions[0]];

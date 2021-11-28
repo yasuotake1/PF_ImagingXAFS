@@ -63,7 +63,7 @@ public class SVD implements PlugIn {
 		}
 		return true;
 	}
-	
+
 	public static boolean setStandards(boolean showPlot, double[] energy) {
 		energies = Arrays.copyOf(energy, energy.length);
 		return setStandards(showPlot);
@@ -239,7 +239,8 @@ public class SVD implements PlugIn {
 		FileInfo fi = impDmut.getOriginalFileInfo();
 		if (saveImages && fi != null) {
 			for (ImagePlus imp : results) {
-				IJ.saveAsTiff(imp, fi.directory + title.replace("_normalized.tif", "") + "_" + imp.getTitle() + ".tif");
+				IJ.saveAsTiff(imp, fi.directory + title.replace("_normalized", "").replace(".tif", "") + "_"
+						+ imp.getTitle() + ".tif");
 			}
 		}
 		IJ.showProgress(1, 1);
@@ -310,5 +311,5 @@ public class SVD implements PlugIn {
 		}
 		return (float) Math.sqrt(square / len);
 	}
-	
+
 }

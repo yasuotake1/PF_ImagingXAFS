@@ -98,7 +98,11 @@ public class OrcaCommon implements PlugIn {
 		fi.width = prop.width;
 		fi.height = prop.height;
 		fi.intelByteOrder = true;
-		return Raw.open(path.toString(), fi);
+		ImagePlus imp = Raw.open(path.toString(), fi);
+		fi.directory = IJ.addSeparator(path.getParent().toString());
+		fi.fileName = path.getFileName().toString();
+		imp.setFileInfo(fi);
+		return imp;
 	}
 
 	/**
@@ -107,13 +111,14 @@ public class OrcaCommon implements PlugIn {
 	 * = 29500, DCMDistance = 25, corr = 0.004573 degree leads to correctedE =
 	 * 7109.24 eV (difference = -1.96 eV).
 	 * 
-	 * @param y Pixel position where the correction is calculated.
-	 * @param y0 Correction center position, i.e., correctedE = ene at y = y0.
-	 * @param ene Nominal DCM energy in eV.
-	 * @param prop OrcaProps.
+	 * @param y     Pixel position where the correction is calculated.
+	 * @param y0    Correction center position, i.e., correctedE = ene at y = y0.
+	 * @param ene   Nominal DCM energy in eV.
+	 * @param prop  OrcaProps.
 	 * @param calib Pixels size in Calibration is used if the unit is µm.
 	 * @return Corrected photon energy in eV.
-	 * @see <a href="https://doi.org/10.1107/S1600577515012990">M. Katayama et al., J. Synchrotron Rad. 22, 1227 (2015).</a>
+	 * @see <a href="https://doi.org/10.1107/S1600577515012990">M. Katayama et al.,
+	 *      J. Synchrotron Rad. 22, 1227 (2015).</a>
 	 */
 	public static double getCorrectedE(double y, double y0, double ene, OrcaProps prop, Calibration calib) {
 		double coefDCMDirection = -1;
@@ -129,7 +134,7 @@ public class OrcaCommon implements PlugIn {
 				/ Math.PI * 180;
 		return ImagingXAFSCommon.AtoE(angle + corr);
 	}
-	
+
 	public static void setCalibration(ImagePlus imp, OrcaProps prop, int bin) {
 		Calibration calib = new Calibration();
 		double pixelSize = prop.pixelSize;

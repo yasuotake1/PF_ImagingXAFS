@@ -17,8 +17,8 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.WaitForUserDialog;
+import ij.plugin.GaussianBlur3D;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.RankFilters;
 
 public class BatchJob_Orca implements PlugIn {
 
@@ -31,17 +31,16 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addFileField("First image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format)", "");
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
-		gd.addMessage("Filter:");
-		gd.addCheckbox("Apply median filter", false);
-		gd.addNumericField("Radius", 1.0, 1);
+		gd.addMessage("Preprocess:");
+		gd.addCheckbox("Apply 3D Gaussian blur", false);
 		gd.addMessage("Normalization:");
-		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 7, "eV");
-		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 7, "eV");
-		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 7, "eV");
-		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
+		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
+		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 8, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 8, "eV");
 		gd.addNumericField("Filter threshold", 2);
-		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 7, "eV");
-		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 7, "eV");
+		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 8, "eV");
+		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 8, "eV");
 		gd.addMessage("Singular value decomposition:");
 		gd.addCheckbox("Do SVD", true);
 		gd.addCheckbox("Clip at zero", true);
@@ -59,7 +58,6 @@ public class BatchJob_Orca implements PlugIn {
 			return;
 		String strBinning = gd.getNextChoice();
 		boolean filter = gd.getNextBoolean();
-		double radius = gd.getNextNumber();
 		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
@@ -98,19 +96,31 @@ public class BatchJob_Orca implements PlugIn {
 		int roiWidth = roi.getBounds().width;
 		int roiHeight = roi.getBounds().height;
 		impRoi.close();
+		double xsigma = 1.0, ysigma = 1.0, zsigma = 7.0;
+		if (filter) {
+			gd = new GenericDialog("3D Gaussian Blur");
+			gd.addNumericField("X sigma:", xsigma, 1);
+			gd.addNumericField("Y sigma:", ysigma, 1);
+			gd.addNumericField("Z sigma:", zsigma, 1);
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+			xsigma = gd.getNextNumber();
+			ysigma = gd.getNextNumber();
+			zsigma = gd.getNextNumber();
+		}
 		if (doSVD && !SVD.setStandards(false, energy))
 			return;
 		IJ.run("Close All");
 		System.gc();
 
-		ImagePlus impMut, impCrop, impCorrected, impNorm, impDmut;
+		ImagePlus impMut, impCrop, impCorrected, impNorm, impDmut, impLast;
 		String baseName;
 		Instant startTime = Instant.now();
 		String first9809Path = strImg9809Path;
 		int rep = getRepetition();
 		Path dirStitch = Paths.get(getImg9809Root(), "stitching");
 		ArrayList<String> sufList = new ArrayList<String>();
-		RankFilters rf = new RankFilters();
 		Stitching sti = new Stitching();
 
 		if (copy) {
@@ -144,12 +154,7 @@ public class BatchJob_Orca implements PlugIn {
 			impCorrected = Load_OrcaStack.GetCorrectedStack(impCrop);
 			if (filter) {
 				IJ.log("Applying filter...");
-				int slc = impCorrected.getNSlices();
-				for (int j = 1; j <= slc; j++) {
-					IJ.showStatus("Applying filter " + String.valueOf(j) + "/" + String.valueOf(slc));
-					impCorrected.setSlice(i);
-					rf.rank(impCorrected.getProcessor(), radius, RankFilters.MEDIAN);
-				}
+				GaussianBlur3D.blur(impCorrected, xsigma, ysigma, zsigma);
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCorrected.show();
@@ -164,6 +169,7 @@ public class BatchJob_Orca implements PlugIn {
 
 			if (copy) {
 				if (i == 0) {
+					sufList.add("_LastImage.tif");
 					sufList.add("_Dmut.tif");
 					sufList.add("_E0.tif");
 					if (doSVD) {
@@ -173,13 +179,16 @@ public class BatchJob_Orca implements PlugIn {
 						}
 					}
 				}
+				impCorrected.setSlice(impCorrected.getNSlices());
+				impLast = new ImagePlus(baseName + "_LastImage.tif", impCorrected.getProcessor());
+				IJ.saveAsTiff(impLast, impCorrected.getOriginalFileInfo().directory + impLast.getTitle());
 				for (int j = 0; j < sufList.size(); j++) {
 					Path srcCopy = Paths.get(getImg9809Dir(), baseName + sufList.get(j));
-					Path tgtCopy = Paths.get(dirStitch.toString(), baseName + sufList.get(j));
 					try {
-						Files.copy(srcCopy, tgtCopy, StandardCopyOption.REPLACE_EXISTING);
+						Files.copy(srcCopy, dirStitch.resolve(srcCopy.getFileName()),
+								StandardCopyOption.REPLACE_EXISTING);
 					} catch (IOException ex) {
-						IJ.error("Failed to copy result file(s).");
+						IJ.error("Failed to copy result file(s).\n" + ex.getMessage());
 						return;
 					}
 				}

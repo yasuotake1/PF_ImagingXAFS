@@ -163,8 +163,8 @@ public class Normalization implements PlugIn {
 		impE0.show();
 		impDmut.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_Dmut.tif");
 		impDmut.show();
-		if (autoSave) {
-			FileInfo fi = impSrc.getOriginalFileInfo();
+		FileInfo fi = impSrc.getOriginalFileInfo();
+		if (autoSave && fi != null) {
 			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
 			IJ.saveAsTiff(impE0, fi.directory + impE0.getTitle());
 			IJ.saveAsTiff(impDmut, fi.directory + impDmut.getTitle());

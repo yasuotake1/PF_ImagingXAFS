@@ -22,8 +22,8 @@ public class Normalization_Menu implements PlugIn {
 				"Note for Filter threshold (Ft): Pixels at which\n(pre- and post-edge lines separation) < (StdDev@pre + StdDev@post) * Ft\nare filtered.");
 		gd.addNumericField("Filter threshold: ", 2);
 		gd.addMessage("E0 plot range (can be modified afterwards)");
-		gd.addNumericField("minimum: ", ImagingXAFSCommon.e0Min, 2, 7, "eV");
-		gd.addNumericField("maximum: ", ImagingXAFSCommon.e0Max, 2, 7, "eV");
+		gd.addNumericField("minimum: ", ImagingXAFSCommon.e0Min, 2, 8, "eV");
+		gd.addNumericField("maximum: ", ImagingXAFSCommon.e0Max, 2, 8, "eV");
 		gd.addCheckbox("Show statistics and summary", true);
 		gd.addCheckbox("Save automatically", true);
 		gd.showDialog();

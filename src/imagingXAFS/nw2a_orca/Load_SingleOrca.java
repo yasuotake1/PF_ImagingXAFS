@@ -11,6 +11,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.ImageCalculator;
 
 public class Load_SingleOrca implements PlugIn {
+	
 	public static ImagePlus impTgt;
 	
 	public void run(String arg) {
@@ -61,4 +62,5 @@ public class Load_SingleOrca implements PlugIn {
 		IJ.run(impTgt, "Enhance Contrast...", "saturated=0.1");
 		impTgt.updateAndDraw();
 	}
+	
 }
