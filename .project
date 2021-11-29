@@ -24,4 +24,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>poi-3.17</name>
+			<type>2</type>
+			<location>/Users/yasuotake1/eclipse-workspace/PF_ImagingXAFS/poi-3.17</location>
+		</link>
+	</linkedResources>
 </projectDescription>
