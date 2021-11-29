@@ -20,9 +20,9 @@ public class Load_OrcaStack implements PlugIn {
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
-		gd.addFileField("Image data file (9809 format): ", "");
-		gd.addFileField("Reference data file (9809 format, if exists): ", "");
-		gd.addChoice("Binning: ", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
+		gd.addFileField("Image data file (9809 format)", "");
+		gd.addFileField("Reference data file (9809 format, if exists)", "");
+		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
 		gd.addCheckbox("Energy correction", true);
 		gd.addCheckbox("Save automatically", true);
 		gd.showDialog();

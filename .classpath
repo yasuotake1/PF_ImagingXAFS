@@ -4,5 +4,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/IJ"/>
 	<classpathentry kind="lib" path="commons-math3-3.6.1/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="poi-3.17/poi-3.17.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

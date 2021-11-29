@@ -24,6 +24,7 @@
  	</jar>
     <copy file="../PF_ImagingXAFS.jar" toDir="${pluginsDir}" />
     <copy file="commons-math3-3.6.1/commons-math3-3.6.1.jar" toDir="${pluginsDir}" />
+    <copy file="poi-3.17/poi-3.17.jar" toDir="${pluginsDir}" />
     <copy file="OrcaProps.config" toDir="${pluginsDir}" />
   </target>
 </project>
