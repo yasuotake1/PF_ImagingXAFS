@@ -3,6 +3,7 @@ package imagingXAFS.nw2a_orca;
 import ij.plugin.PlugIn;
 
 public class OrcaProps implements PlugIn {
+	
 	public int dcmDirection;// Down = 0, Up = 1.
 	public double detectorPosition;// from source point in mm.
 	public double pixelSize;// in um.
@@ -13,4 +14,5 @@ public class OrcaProps implements PlugIn {
 
 	public void run(String arg) {
 	}
+	
 }

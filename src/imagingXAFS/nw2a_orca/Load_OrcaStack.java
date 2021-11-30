@@ -16,6 +16,7 @@ import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
 
 public class Load_OrcaStack implements PlugIn {
+	
 	public static ImagePlus impStack;
 
 	public void run(String arg) {
@@ -90,7 +91,6 @@ public class Load_OrcaStack implements PlugIn {
 		}
 		impStack.setTitle(pathImg9809.getFileName().toString());
 		ImagingXAFSCommon.setPropEnergies(impStack, energies);
-
 		OrcaCommon.setCalibration(impStack, prop, intBin);
 		impStack.changes = false;
 		fi.fileName = impStack.getTitle();
