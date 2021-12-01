@@ -13,17 +13,17 @@ public class Normalization_Menu implements PlugIn {
 		String[] listStackTitle = ImagingXAFSCommon.getDataTitles(true);
 
 		GenericDialog gd = new GenericDialog("Normalization");
-		gd.addChoice("Imagestack: ", listStackTitle, listStackTitle[0]);
-		gd.addNumericField("Pre-edge from: ", ImagingXAFSCommon.normalizationParam[0], 2, 7, "eV");
-		gd.addNumericField("to: ", ImagingXAFSCommon.normalizationParam[1], 2, 7, "eV");
-		gd.addNumericField("Post-edge from: ", ImagingXAFSCommon.normalizationParam[2], 2, 7, "eV");
-		gd.addNumericField("to: ", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
+		gd.addChoice("Imagestack", listStackTitle, listStackTitle[0]);
+		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 7, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 7, "eV");
+		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 7, "eV");
+		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
 		gd.addMessage(
 				"Note for Filter threshold (Ft): Pixels at which\n(pre- and post-edge lines separation) < (StdDev@pre + StdDev@post) * Ft\nare filtered.");
-		gd.addNumericField("Filter threshold: ", 2);
-		gd.addMessage("E0 plot range (can be modified afterwards)");
-		gd.addNumericField("minimum: ", ImagingXAFSCommon.e0Min, 2, 8, "eV");
-		gd.addNumericField("maximum: ", ImagingXAFSCommon.e0Max, 2, 8, "eV");
+		gd.addNumericField("Filter threshold", 2.0, 1);
+		gd.addMessage("E0 plot range (can be modified afterwards):");
+		gd.addNumericField("minimum", ImagingXAFSCommon.e0Min, 2, 8, "eV");
+		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 8, "eV");
 		gd.addCheckbox("Show statistics and summary", true);
 		gd.addCheckbox("Save automatically", true);
 		gd.showDialog();

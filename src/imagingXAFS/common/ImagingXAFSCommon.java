@@ -177,11 +177,11 @@ public class ImagingXAFSCommon implements PlugIn {
 		for (int i = 0; i < energy.length; i++) {
 			if (indices[0] == 0 && energy[i] >= normalizationParam[0])
 				indices[0] = i;
-			if (indices[1] == 0 && energy[i] > normalizationParam[1])
+			if (indices[1] == 0 && energy[i] >= normalizationParam[1])
 				indices[1] = i - 1;
 			if (indices[2] == 0 && energy[i] >= normalizationParam[2])
 				indices[2] = i;
-			if (indices[3] == 0 && energy[i] > normalizationParam[3])
+			if (indices[3] == 0 && energy[i] >= normalizationParam[3])
 				indices[3] = i - 1;
 		}
 		if (indices[0] >= indices[1] || indices[2] >= indices[3]) {

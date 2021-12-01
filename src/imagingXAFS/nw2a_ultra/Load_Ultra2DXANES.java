@@ -33,6 +33,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 		boolean autoSave = gd.getNextBoolean();
 
 		try {
+			IJ.showStatus("Loading ScanInfo...");
 			UltraScanInfo si = new UltraScanInfo(pathInfo);
 			if (!si.energy) {
 				IJ.error("Invalid ScanInfo file.");
@@ -52,7 +53,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 					return;
 				arrImg = extractArray("rep" + gdRepeat.getNextChoice(), arrImg);
 			}
-			if (si.mosaic) {
+			if (si.mosaic && intMode != 2) {
 				String[] listX = new String[si.numMosaicX];
 				for (int i = 0; i < listX.length; i++) {
 					listX[i] = String.format("%02d", i + 1);
@@ -72,7 +73,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 				keyMosaic += "_Y" + gdMosaic.getNextChoice();
 				arrImg = extractArray(keyMosaic, arrImg);
 			}
-			if (si.tomo) {
+			if (si.tomo && intMode != 2) {
 				String[] listAngle = new String[si.angles.length];
 				for (int i = 0; i < listAngle.length; i++) {
 					listAngle[i] = String.format("%07.2f", si.angles[i]);
@@ -83,7 +84,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 				gdAngle.showDialog();
 				if (gdAngle.wasCanceled())
 					return;
-				arrImg = extractArray(gd.getNextChoice() + "_Degree", arrImg);
+				arrImg = extractArray(gdAngle.getNextChoice() + "_Degree", arrImg);
 			}
 			ImagePlus impImg, impRef, impTgt;
 			impImg = XRM_Reader.Load(si.directory + arrImg[0], false);// Load one image to read info, to skip reading
@@ -101,6 +102,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 					impImg = loadAndAverage(arrImg, si.directory, i, si.nExposures);
 					impRef = loadAndAverage(si.referenceFiles, si.directory, i, si.refNExposures);
 					impTgt = ic.run("divide create 32-bit", impRef, impImg);
+					impTgt.getProcessor().log();
 					impTgt.setTitle(impImg.getTitle().replace(".xrm", ""));
 					stack.addSlice(impTgt.getTitle(), impTgt.getProcessor());
 					break;
@@ -136,7 +138,11 @@ public class Load_Ultra2DXANES implements PlugIn {
 			}
 			impStack.show();
 		} catch (Exception e) {
-			IJ.log(e.getMessage());
+			IJ.log(e.getClass().getName() + ": " + e.getMessage());
+			StackTraceElement[] element = e.getStackTrace();
+			for (int i = 0; i < element.length; i++) {
+				IJ.log(element[i].toString());
+			}
 			return;
 		}
 	}

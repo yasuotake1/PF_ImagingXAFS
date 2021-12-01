@@ -35,15 +35,15 @@ public class AlphaImage_Interactive implements PlugIn, DialogListener {
 		impPreview = new ImagePlus("Preview", ipE0RGB.duplicate());
 
 		GenericDialog gd = new GenericDialog("Make E0 @Color - Dmut @alpha channel image");
-		gd.addChoice("E0 image: ", listTitle, listTitle[0]);
+		gd.addChoice("E0: Image", listTitle, listTitle[0]);
 		gd.addNumericField("Display range minimum", ipE0.getMin(), 2, 8, "eV");
 		gd.addNumericField("Maximum", ipE0.getMax(), 2, 8, "eV");
-		gd.addChoice("Dmut image: ", listTitle, listTitle[1]);
+		gd.addChoice("Dmut: Image", listTitle, listTitle[1]);
 		gd.addNumericField("Display range minimum", ipDmut.getMin(), 3);
 		gd.addNumericField("Maximum", ipDmut.getMax(), 3);
-		gd.addRadioButtonGroup("Background: ", choiceBg, 1, 2, choiceBg[0]);
-		gd.addSlider("Gamma: ", 0.5, 2, 1.0, 0.05);
-		gd.addCheckbox("Preview ", false);
+		gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
+		gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
+		gd.addCheckbox("Preview", false);
 		gd.addDialogListener(this);
 		gd.showDialog();
 		if (impPreview.isVisible())

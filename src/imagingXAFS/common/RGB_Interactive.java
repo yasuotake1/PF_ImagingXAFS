@@ -45,18 +45,21 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		impPreview = new ImagePlus("Preview", ipR.convertToRGB());
 
 		GenericDialog gd = new GenericDialog("Make RGB phase map");
-		gd.addChoice("Red image: ", listTitle, listTitle[1]);
+		gd.addMessage("Red:");
+		gd.addChoice("Image", listTitle, listTitle[1]);
 		gd.addNumericField("Display range minimum", ipR.getMin(), 3);
 		gd.addNumericField("Maximum", ipR.getMax(), 3);
-		gd.addChoice("Green image: ", listTitle, listTitle[2]);
+		gd.addMessage("Green:");
+		gd.addChoice("Image", listTitle, listTitle[2]);
 		gd.addNumericField("Display range minimum", ipG.getMin(), 3);
 		gd.addNumericField("Maximum", ipG.getMax(), 3);
-		gd.addChoice("Blue image: ", listTitle, listTitle[0]);
+		gd.addMessage("Blue:");
+		gd.addChoice("Image", listTitle, listTitle[0]);
 		gd.addNumericField("Display range minimum", Double.NaN, 3);
 		gd.addNumericField("Maximum", Double.NaN, 3);
-		gd.addRadioButtonGroup("Background: ", choiceBg, 1, 2, choiceBg[0]);
-		gd.addSlider("Gamma: ", 0.5, 2, 1.0, 0.05);
-		gd.addCheckbox("Preview ", false);
+		gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
+		gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
+		gd.addCheckbox("Preview", false);
 		gd.addDialogListener(this);
 		gd.showDialog();
 		if (impPreview.isVisible())
