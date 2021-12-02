@@ -39,6 +39,9 @@ public class UltraScanInfo implements PlugIn {
 	public int numMosaicX;
 	public int numMosaicY;
 
+	public void run(String arg) {
+	}
+
 	public UltraScanInfo(String path) throws IOException, NumberFormatException, IndexOutOfBoundsException {
 		Path p = Paths.get(path);
 		directory = IJ.addSeparator(p.getParent().toString());
@@ -138,9 +141,6 @@ public class UltraScanInfo implements PlugIn {
 		numMosaicY = mosaic ? (mosaicUp + mosaicDown + (mosaicCentralFile ? 1 : 0)) : 1;
 	}
 
-	public void run(String arg) {
-	}
-
 	private double[] getDistinctArray(String key, String[] source) {
 		ArrayList<Double> list = new ArrayList<Double>();
 		double d1 = getNumberBeforeTheKey(key, source[0]);
@@ -173,6 +173,13 @@ public class UltraScanInfo implements PlugIn {
 			}
 		}
 		return d;
+	}
+
+	public String getPath(int idx) {
+		if (allFiles != null && idx < allFiles.length)
+			return directory + allFiles[idx];
+		else
+			return null;
 	}
 
 }
