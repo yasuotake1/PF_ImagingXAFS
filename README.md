@@ -32,11 +32,9 @@ plugin, remove it to avoid conflicts.
 To run this plugin in vanilla ImageJ, 'Stitching_-3.1.6.jar' and many other plugins are necessary to use stiching and drift correction functions.
 
 # Acknowledgements
-Stitching function in imagingXAFS.common uses 
+Stitching function in imagingXAFS.common and drift correction function in imagingXAFS.nw2a_ultra use 
 [fiji/Stiching](https://github.com/fiji/Stitching "fiji/Stitching: Fiji's Stitching plugins reconstruct big images from tiled input images.") 
 plugin.
-The users are highly encouraged to refer [S. Preibisch et al.](https://doi.org/10.1093/bioinformatics/btp184 "S. Preibisch et al., Bioinformatics 25, 1463 (2009).") 
-when publicating the results of tiling/mosaic data.
 
 Modified version of [mrsutherland/XRM_Reader](https://github.com/mrsutherland/XRM_Reader "mrsutherland/XRM_Reader: ImageJ plugin to read xrm files.")
 plugin is used in importing Zeiss Ultra XRM images.
