@@ -14,7 +14,7 @@ public class SVD_Menu implements PlugIn {
 		Integer[] list2dId = ImagingXAFSCommon.getDataIds(false);
 		String[] list2dTitle = ImagingXAFSCommon.getDataTitles(false);
 		if (listStackId.length == 0 || list2dId.length == 0) {
-			IJ.error("Could not find open data image(s).");
+			IJ.error("Could not find data image(s).");
 			return;
 		}
 

@@ -23,6 +23,10 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 	public void run(String arg) {
 		Integer[] listStackId = ImagingXAFSCommon.getDataIds(true);
 		String[] listStackTitle = ImagingXAFSCommon.getDataTitles(true);
+		if (listStackId.length < 12) {
+			IJ.error("Could not find data image(s).");
+			return;
+		}
 
 		GenericDialog gd = new GenericDialog("Drift correction");
 		gd.addChoice("Imagestack", listStackTitle, listStackTitle[0]);

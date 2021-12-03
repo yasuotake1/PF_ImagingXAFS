@@ -11,6 +11,10 @@ public class Normalization_Menu implements PlugIn {
 	public void run(String arg) {
 		Integer[] listStackId = ImagingXAFSCommon.getDataIds(true);
 		String[] listStackTitle = ImagingXAFSCommon.getDataTitles(true);
+		if (listStackId.length < 1) {
+			IJ.error("Could not find data image(s).");
+			return;
+		}
 
 		GenericDialog gd = new GenericDialog("Normalization");
 		gd.addChoice("Imagestack", listStackTitle, listStackTitle[0]);

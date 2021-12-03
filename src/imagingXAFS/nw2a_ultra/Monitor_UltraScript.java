@@ -1,6 +1,8 @@
 package imagingXAFS.nw2a_ultra;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,23 +52,21 @@ public class Monitor_UltraScript implements PlugIn {
 			if (usi == null)
 				return;
 			int tempIdx = currentIdx;
-			File f;
-			while (true) {
-				f = new File(usi.getPath(currentIdx + 1));
-				if (f.exists())
-					currentIdx++;
-				else
-					break;
+			File f = new File(usi.directory);
+			List<String> ls = Arrays.asList(f.list());
+			while (currentIdx < usi.allFiles.length - 1 && ls.contains(usi.allFiles[currentIdx + 1])) {
+				currentIdx++;
 			}
-			if (currentIdx != tempIdx) {
+			if (currentIdx == 0 || currentIdx != tempIdx) {
 				try {
 					super.setImage(XRM_Reader.Load(usi.getPath(currentIdx)));
 					setTitle("UltraXRM script monitor: " + usi.allFiles[currentIdx]);
 				} catch (Exception e) {
+					currentIdx = (currentIdx == 0) ? 0 : currentIdx - 1;
 				}
 			}
 		}
-		
+
 		public void StopMonitor() {
 			mt.Stop();
 		}
