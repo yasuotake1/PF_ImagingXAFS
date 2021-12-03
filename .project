@@ -24,4 +24,16 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>LICENSE</name>
+			<type>1</type>
+			<location>/Users/yasuotake1/eclipse-workspace/PF_ImagingXAFS/LICENSE</location>
+		</link>
+		<link>
+			<name>README.md</name>
+			<type>1</type>
+			<location>/Users/yasuotake1/eclipse-workspace/PF_ImagingXAFS/README.md</location>
+		</link>
+	</linkedResources>
 </projectDescription>
