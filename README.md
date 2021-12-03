@@ -1,5 +1,5 @@
 # PF_ImagingXAFS
-ImageJ/Fiji plugin for Imaging XAFS data analysis at KEK-PF BL-15A1, PF-AR NW2A ORCA-Flash, and PF-AR NW2A Ultra.
+ImageJ/Fiji plugin for Imaging XAFS data analysis at KEK-PF BL-15A1 and PF-AR NW2A.
 Using this plugin, one can  
 (1) Check an image (and apply flat-fied reference if necessary).  
 (2) Import energy stack data.  
@@ -50,3 +50,4 @@ About TXM Wizard, refer to [Y. Liu et al.](https://doi.org/10.1107/S090904951104
 
 Singular value decomposition in imagingXAFS.common follows [Koprinarov et al.](https://doi.org/10.1021/jp013281l "I. N. Koprinarov et al., J. Phys. Chem. B 106, 5358 (2002)."),
 that is commonly used for soft X-ray scanning transmission X-ray microscopy (STXM) data analysis: 
+[aXis2000](http://unicorn.chemistry.mcmaster.ca/axis/aXis2000.html "aXis2000 source").
