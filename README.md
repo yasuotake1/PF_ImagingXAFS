@@ -1,7 +1,7 @@
 # PF_ImagingXAFS
 ImageJ/Fiji plugin for Imaging XAFS data analysis at KEK-PF BL-15A1 and PF-AR NW2A.
 Using this plugin, one can  
-(1) Check an image (and apply flat-fied reference if necessary).  
+(1) Check an image (and apply reference if necessary).  
 (2) Import energy stack data.  
 (3) Pre-process the stack such as energy correction and drift correction if necessary.  
 (4) Show multiple roi/point spectra, normalize them by pre- and post-edge lines, and fit them using standard spectra.  
