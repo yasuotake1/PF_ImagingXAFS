@@ -49,7 +49,7 @@ public class UltraScanInfo implements PlugIn {
 		String[] elements;
 		int idx = 0;
 		forVariables: for (int i = 0; i < lines.length; i++) {
-			elements = lines[i].split("\s");
+			elements = lines[i].split("\\s");
 			switch (elements[0]) {
 			case "VERSION":
 				version = Integer.parseInt(elements[1]);
