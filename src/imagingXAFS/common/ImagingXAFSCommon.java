@@ -77,8 +77,37 @@ public class ImagingXAFSCommon implements PlugIn {
 	 * @return Array of photon energy
 	 */
 	public static double[] readEnergies(Path path) {
+		return readValues(path, true, 0);
+	}
+
+	/**
+	 * Reads values from a 9809 XAFS data file or comma-separated text. This
+	 * overload assumes I0 intensity recorded at column=3.
+	 * 
+	 * @param path Path of the file
+	 * @return Array of values
+	 */
+	public static double[] readIntensities(Path path) {
+		return readValues(path, false, 3);
+	}
+
+	/**
+	 * Reads values from a 9809 XAFS data file or comma-separated text.
+	 * 
+	 * @param path   Path of the file
+	 * @param column column to read
+	 * @return Array of values
+	 */
+	public static double[] readIntensities(Path path, int column) {
+		return readValues(path, false, column);
+	}
+
+	private static double[] readValues(Path path, boolean applyAtoEfor9809, int column) {
 		List<String> rows = new ArrayList<String>();
-		double[] energies;
+		double[] values;
+		if (path == null) {
+			return null;
+		}
 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(path.toString()));
@@ -88,28 +117,33 @@ public class ImagingXAFSCommon implements PlugIn {
 					rows.add(line);
 			}
 			br.close();
-
-			if (rows.get(0).trim().startsWith("9809")) {
+			boolean is9809 = rows.get(0).trim().startsWith("9809");
+			if (is9809) {
 				do {
 					rows.remove(0);
-				} while (!(rows.get(0)).startsWith("    Offset"));
-				energies = new double[rows.size() - 1];
-				for (int i = 0; i < energies.length; i++) {
-					energies[i] = AtoE(Double.parseDouble((rows.get(i + 1)).substring(0, 10).trim()));
+				} while (!(rows.get(0)).trim().startsWith("Offset"));
+				values = new double[rows.size() - 1];
+				for (int i = 0; i < values.length; i++) {
+					values[i] = Double.parseDouble((rows.get(i + 1)).substring(column * 10, column * 10 + 10).trim());
 				}
 			} else {
-				energies = new double[rows.size() - 1];
+				values = new double[rows.size() - 1];
 				String[] arrSplit;
-				for (int i = 0; i < energies.length; i++) {
+				for (int i = 0; i < values.length; i++) {
 					arrSplit = rows.get(i + 1).split(",");
-					energies[i] = Double.parseDouble(arrSplit[0]);
+					values[i] = Double.parseDouble(arrSplit[column]);
+				}
+			}
+			if (applyAtoEfor9809 && is9809) {
+				for (int i = 0; i < values.length; i++) {
+					values[i] = AtoE(values[i]);
 				}
 			}
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			return null;
 		}
-		return energies;
+		return values;
 	}
 
 	/**
@@ -251,5 +285,5 @@ public class ImagingXAFSCommon implements PlugIn {
 	public static int getCurrentScreenHeight() {
 		return IJ.getInstance().getGraphicsConfiguration().getDevice().getDisplayMode().getHeight();
 	}
-	
+
 }

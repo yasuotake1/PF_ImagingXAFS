@@ -16,7 +16,7 @@ import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
 
 public class Load_OrcaStack implements PlugIn {
-	
+
 	public static ImagePlus impStack;
 
 	public void run(String arg) {
@@ -24,6 +24,7 @@ public class Load_OrcaStack implements PlugIn {
 		gd.addFileField("Image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format, if exists)", "");
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
+		gd.addCheckbox("I0 normalization", true);
 		gd.addCheckbox("Energy correction", true);
 		gd.addCheckbox("Save automatically", true);
 		gd.showDialog();
@@ -37,9 +38,12 @@ public class Load_OrcaStack implements PlugIn {
 		if (strImg9809Path.isEmpty() || !Files.exists(pathImg9809))
 			return;
 		String strBinning = gd.getNextChoice();
+		boolean norm = gd.getNextBoolean();
 		boolean corr = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 		double[] energies = ImagingXAFSCommon.readEnergies(pathImg9809);
+		double[] intImg = ImagingXAFSCommon.readIntensities(pathImg9809);
+		double[] intRef = pathRef9809 != null ? ImagingXAFSCommon.readIntensities(pathRef9809) : null;
 		OrcaProps prop = OrcaCommon.ReadProps();
 
 		int i = 0;
@@ -66,13 +70,19 @@ public class Load_OrcaStack implements PlugIn {
 			if (pathRef != null && Files.exists(pathRef)) {
 				impRef = OrcaCommon.LoadOrca(pathRef, prop);
 				impTgt = ic.run("divide create 32-bit", impRef, impImg);
-				impTgt.setTitle(impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i])
-						+ " eV)");
+				impTgt.setTitle(
+						impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i]) + " eV)");
 				impTgt.getProcessor().log();
+				if (norm) {
+					impTgt.getProcessor().add(Math.log(intImg[i] / intRef[i]));
+				}
 				pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + ".img");
 			} else {
 				impTgt = impImg;
 				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
+				if (norm) {
+					impTgt.getProcessor().multiply(1 / intImg[i]);
+				}
 			}
 			pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + ".img");
 			stack.addSlice(impTgt.getTitle(), impTgt.getProcessor());
@@ -95,12 +105,12 @@ public class Load_OrcaStack implements PlugIn {
 		impStack.changes = false;
 		fi.fileName = impStack.getTitle();
 		impStack.setFileInfo(fi);
-		if(autoSave) {
+		if (autoSave) {
 			IJ.saveAsTiff(impStack, fi.getFilePath() + ".tif");
 		}
-		if(corr) {
+		if (corr) {
 			impStack = GetCorrectedStack(impStack);
-			if(autoSave) {
+			if (autoSave) {
 				IJ.saveAsTiff(impStack, fi.getFilePath() + "_corrected.tif");
 			}
 		}
@@ -109,15 +119,15 @@ public class Load_OrcaStack implements PlugIn {
 		impStack.updateAndDraw();
 		IJ.setTool("multipoint");
 	}
-	
+
 	public static ImagePlus GetCorrectedStack(ImagePlus impSrc) {
 		int[] Dimensions = impSrc.getDimensions();
 		int nSlices = Dimensions[3];
 		int currentSliceNumber = impSrc.getSlice();
 		double[] energies = ImagingXAFSCommon.getPropEnergies(impSrc);
-		if(energies==null)
+		if (energies == null)
 			return impSrc;
-		
+
 		double[] correctedEnergies = new double[nSlices];
 		OrcaProps prop = OrcaCommon.ReadProps();
 		ImagePlus impTgt = impSrc.duplicate();
@@ -132,8 +142,8 @@ public class Load_OrcaStack implements PlugIn {
 					"Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle() + "...");
 			IJ.showProgress(i, Dimensions[1]);
 			for (int j = 0; j < nSlices; j++) {
-				correctedEnergies[j] = OrcaCommon.getCorrectedE((double) i, (double) Dimensions[1] / 2,
-						energies[j], prop, impSrc.getCalibration());
+				correctedEnergies[j] = OrcaCommon.getCorrectedE((double) i, (double) Dimensions[1] / 2, energies[j],
+						prop, impSrc.getCalibration());
 			}
 
 			for (int j = 0; j < nSlices; j++) {
