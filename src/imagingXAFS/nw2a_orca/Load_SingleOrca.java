@@ -11,15 +11,16 @@ import ij.plugin.PlugIn;
 import ij.plugin.ImageCalculator;
 
 public class Load_SingleOrca implements PlugIn {
-	
+
 	public static ImagePlus impTgt;
-	
+
 	public void run(String arg) {
 		OrcaProps prop = OrcaCommon.ReadProps();
 
 		GenericDialog gd = new GenericDialog("Load single ORCA-Flash image");
 		gd.addFileField("Image file", "");
 		gd.addFileField("Reference image file (if exists)", "");
+		gd.addNumericField("Constant dark offset", 100);
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -31,16 +32,21 @@ public class Load_SingleOrca implements PlugIn {
 		Path pathRef = Paths.get(strRefPath);
 		if (strImgPath.isEmpty() || !Files.exists(pathImg))
 			return;
+		int ofsInt = -(int) gd.getNextNumber();
 		String strBinning = gd.getNextChoice();
 
 		ImagePlus impImg = OrcaCommon.LoadOrca(pathImg, prop);
 		if (impImg == null)
 			return;
+		if (ofsInt != 0)
+			impImg.getProcessor().add(ofsInt);
 		ImagePlus impRef;
 		if (!strRefPath.isEmpty() && Files.exists(pathRef)) {
 			impRef = OrcaCommon.LoadOrca(pathRef, prop);
 			if (impRef == null)
 				return;
+			if (ofsInt != 0)
+				impRef.getProcessor().add(ofsInt);
 			impTgt = ImageCalculator.run(impRef, impImg, "divide create 32-bit");
 			impTgt.setTitle(impImg.getTitle().replace(".img", ""));
 			impTgt.getProcessor().log();
@@ -61,5 +67,5 @@ public class Load_SingleOrca implements PlugIn {
 		IJ.run(impTgt, "Enhance Contrast...", "saturated=0.1");
 		impTgt.updateAndDraw();
 	}
-	
+
 }

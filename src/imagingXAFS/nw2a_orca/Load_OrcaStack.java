@@ -23,6 +23,8 @@ public class Load_OrcaStack implements PlugIn {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
 		gd.addFileField("Image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format, if exists)", "");
+		gd.addNumericField("Constant dark offset", 100);
+		gd.addNumericField("Energy offset", 0, 2);
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
 		gd.addCheckbox("I0 normalization", true);
 		gd.addCheckbox("Energy correction", true);
@@ -37,11 +39,18 @@ public class Load_OrcaStack implements PlugIn {
 		Path pathRef9809 = Paths.get(strRef9809Path);
 		if (strImg9809Path.isEmpty() || !Files.exists(pathImg9809))
 			return;
+		int ofsInt = -(int) gd.getNextNumber();
+		double ofsEne = gd.getNextNumber();
 		String strBinning = gd.getNextChoice();
 		boolean norm = gd.getNextBoolean();
 		boolean corr = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 		double[] energies = ImagingXAFSCommon.readEnergies(pathImg9809);
+		if (ofsEne <= -0.01 || ofsEne >= 0.01) {
+			for (int i = 0; i < energies.length; i++) {
+				energies[i] += ofsEne;
+			}
+		}
 		double[] intImg = ImagingXAFSCommon.readIntensities(pathImg9809);
 		double[] intRef = pathRef9809 != null ? ImagingXAFSCommon.readIntensities(pathRef9809) : null;
 		OrcaProps prop = OrcaCommon.ReadProps();
@@ -62,6 +71,8 @@ public class Load_OrcaStack implements PlugIn {
 			impImg = OrcaCommon.LoadOrca(pathImg, prop);
 			if (impImg == null)
 				break;
+			if (ofsInt != 0)
+				impImg.getProcessor().add(ofsInt);
 			if (i == 0) {
 				stack = new ImageStack(impImg.getWidth(), impImg.getHeight());
 				fi = impImg.getOriginalFileInfo();
@@ -69,6 +80,8 @@ public class Load_OrcaStack implements PlugIn {
 
 			if (pathRef != null && Files.exists(pathRef)) {
 				impRef = OrcaCommon.LoadOrca(pathRef, prop);
+				if (ofsInt != 0)
+					impRef.getProcessor().add(ofsInt);
 				impTgt = ic.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(
 						impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i]) + " eV)");
