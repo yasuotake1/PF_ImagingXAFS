@@ -40,7 +40,7 @@ Modified version of [mrsutherland/XRM_Reader](https://github.com/mrsutherland/XR
 plugin is used in importing Zeiss Ultra XRM images.
 
 The energy correction in imagingXAFS.nw2a_orca follows 
-[M. Katayama et al.](https://doi.org/10.1107/S1600577515012990 "M. Katayama et al., J. Synchrotron Rad. 22, 1227 (2015).")
+[M. Katayama et al.](https://doi.org/10.1107/S0909049512028282 "M. Katayama et al., J. Synchrotron Rad. 19, 717 (2012).")
 
 The manner of Imaging XAFS data analysis in this plugin is highly inspired by 
 [TXM Wizard](https://sourceforge.net/projects/txm-wizard/ "TXM-Wizard download | SourceForge.net"). 
