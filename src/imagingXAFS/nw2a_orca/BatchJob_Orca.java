@@ -30,6 +30,8 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addMessage("Source:");
 		gd.addFileField("First image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format)", "");
+		gd.addNumericField("Constant dark offset", 100);
+		gd.addNumericField("Energy offset", 0, 2);
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
 		gd.addMessage("Preprocess:");
 		gd.addCheckbox("Apply 3D Gaussian blur", false);
@@ -56,6 +58,8 @@ public class BatchJob_Orca implements PlugIn {
 		if (strImg9809Path.isEmpty() || !Files.exists(getPathImg9809()) || strRef9809Path.isEmpty()
 				|| !Files.exists(getPathRef9809()))
 			return;
+		double constantOffset = gd.getNextNumber();
+		double energyOffset = gd.getNextNumber();
 		String strBinning = gd.getNextChoice();
 		boolean filter = gd.getNextBoolean();
 		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
@@ -84,17 +88,17 @@ public class BatchJob_Orca implements PlugIn {
 		IJ.run("Load single ORCA-Flash image", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
-		new WaitForUserDialog("Select rectangle region to analyze, then click OK.").show();
+		new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.").show();
 		Roi roi = impRoi.getRoi();
-		if (roi == null || roi.getType() != Roi.RECTANGLE) {
+		if (roi != null && roi.getType() != Roi.RECTANGLE) {
 			IJ.error("Failed to specify region to analyze.");
 			impRoi.close();
 			return;
 		}
-		int roiX = roi.getBounds().x;
-		int roiY = roi.getBounds().y;
-		int roiWidth = roi.getBounds().width;
-		int roiHeight = roi.getBounds().height;
+		int roiX = roi == null ? 0 : roi.getBounds().x;
+		int roiY = roi == null ? 0 : roi.getBounds().y;
+		int roiWidth = roi == null ? impRoi.getWidth() : roi.getBounds().width;
+		int roiHeight = roi == null ? impRoi.getHeight() : roi.getBounds().height;
 		impRoi.close();
 		double xsigma = 1.0, ysigma = 1.0, zsigma = 7.0;
 		if (filter) {
@@ -140,15 +144,21 @@ public class BatchJob_Orca implements PlugIn {
 
 		for (int i = 0; i < rep; i++) {
 			IJ.log("Loading " + getImg9809Name() + "...");
-			strOption = "image=" + strImg9809Path + " reference=" + strRef9809Path + " binning=" + strBinning + " save";
+			strOption = "image=" + strImg9809Path + " reference=" + strRef9809Path + " constant="
+					+ String.valueOf((int) constantOffset) + " energy=" + String.valueOf(energyOffset) + " binning="
+					+ strBinning + " save";
 			IJ.run("Load ORCA-Flash imagestack", strOption);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace(".tif", "");
-			IJ.makeRectangle(roiX, roiY, roiWidth, roiHeight);
-			impCrop = impMut.crop("stack");
-			impCrop.setFileInfo(impMut.getOriginalFileInfo());
-			impMut.close();
-			impCrop.setTitle(baseName);
+			if (roi == null) {
+				impCrop = impMut;
+			} else {
+				IJ.makeRectangle(roiX, roiY, roiWidth, roiHeight);
+				impCrop = impMut.crop("stack");
+				impCrop.setFileInfo(impMut.getOriginalFileInfo());
+				impMut.close();
+				impCrop.setTitle(baseName);
+			}
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
 			impCorrected = Load_OrcaStack.GetCorrectedStack(impCrop);

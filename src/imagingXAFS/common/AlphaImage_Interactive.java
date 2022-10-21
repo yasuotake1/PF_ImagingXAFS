@@ -62,15 +62,19 @@ public class AlphaImage_Interactive implements PlugIn, DialogListener {
 			return;
 		}
 		ipE0 = WindowManager.getImage(idE0).getProcessor();
-		ipE0.setMinAndMax(minE0, maxE0);
-		ipE0RGB = ipE0.convertToRGB();
 		ipDmut = WindowManager.getImage(idDmut).getProcessor();
-		ipDmut.setMinAndMax(minDmut, maxDmut);
-		ipDmutByte = ipDmut.convertToByte(true);
 		if (!isSameSize()) {
 			IJ.error("E0 and Dmut images have different size.");
 			return;
 		}
+		
+		IJ.log("Making E0 @Color - Dmut @alpha channel image...");
+		IJ.log("    E0: " + String.format("%.2f", minE0) + " - " + String.format("%.2f", maxE0) + " eV");
+		IJ.log("    Dmut: " + String.format("%.3f", minDmut) + " - " + String.format("%.3f", maxDmut));
+		ipE0.setMinAndMax(minE0, maxE0);
+		ipE0RGB = ipE0.convertToRGB();
+		ipDmut.setMinAndMax(minDmut, maxDmut);
+		ipDmutByte = ipDmut.convertToByte(true);
 		String strBg = gd.getNextRadioButton();
 		double gamma = gd.getNextNumber();
 
@@ -83,8 +87,9 @@ public class AlphaImage_Interactive implements PlugIn, DialogListener {
 		ImagePlus impResult = new ImagePlus(nameResult, ipE0RGB.duplicate());
 		setAlphaImagePixels(gamma, strBg == choiceBg[0], (int[]) impResult.getProcessor().getPixels());
 		impResult.show();
+		IJ.log("Saving...");
 		IJ.saveAs(impResult, "png", null);
-
+		IJ.log("\\Update:Saving...done.");
 	}
 
 	@Override

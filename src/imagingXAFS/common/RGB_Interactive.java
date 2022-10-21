@@ -76,6 +76,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		int idB = listId[gd.getNextChoiceIndex()];
 		double minB = gd.getNextNumber();
 		double maxB = gd.getNextNumber();
+		IJ.log("Making RGB phase map...");
 		if (idR == 0) {
 			ipR = null;
 			ipRByte = null;
@@ -87,6 +88,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 			ipR = WindowManager.getImage(idR).getProcessor();
 			ipR.setMinAndMax(minR, maxR);
 			ipRByte = ipR.convertToByte(true);
+			IJ.log("    R: " + String.format("%.3f", minR) + " - " + String.format("%.3f", maxR));
 		}
 		if (idG == 0) {
 			ipG = null;
@@ -99,6 +101,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 			ipG = WindowManager.getImage(idG).getProcessor();
 			ipG.setMinAndMax(minG, maxG);
 			ipGByte = ipG.convertToByte(true);
+			IJ.log("    G: " + String.format("%.3f", minG) + " - " + String.format("%.3f", maxG));
 		}
 		if (idB == 0) {
 			ipB = null;
@@ -111,6 +114,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 			ipB = WindowManager.getImage(idB).getProcessor();
 			ipB.setMinAndMax(minB, maxB);
 			ipBByte = ipB.convertToByte(true);
+			IJ.log("    B: " + String.format("%.3f", minB) + " - " + String.format("%.3f", maxB));
 		}
 		if (!checkNullImages()) {
 			return;
@@ -131,8 +135,9 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		ImagePlus impResult = new ImagePlus(nameResult, ipRByte.convertToRGB());
 		setGammaImagePixels(gamma, strBg == choiceBg[0], (int[]) impResult.getProcessor().getPixels());
 		impResult.show();
+		IJ.log("Saving...");
 		IJ.saveAs(impResult, "png", null);
-
+		IJ.log("\\Update:Saving...done.");
 	}
 
 	@Override
