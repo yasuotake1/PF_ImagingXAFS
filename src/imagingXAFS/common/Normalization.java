@@ -126,26 +126,34 @@ public class Normalization implements PlugIn {
 		impDmut = NewImage.createFloatImage("Dmut", wid, hei, 1, NewImage.FILL_BLACK);
 		float[] pixelsDmut = (float[]) impDmut.getProcessor().getPixels();
 		float[] voxels = new float[impSrc.getNSlices()];
-		float e0;
+		float e0_up, e0_down, e0;
+		float e0Jump = ImagingXAFSCommon.e0Jump;
 		for (int i = 0; i < len; i++) {
 			IJ.showProgress(i, len);
-			e0 = 0F;
+			e0_up = e0_down = e0 = 0F;
 			if (isNotFiltered(a0[i], b0[i], a1[i], b1[i], floatEnergy, pixelsStdDevPre[i], pixelsStdDevPost[i],
 					threshold)) {
 				impSrc.getStack().getVoxels(i % wid, i / wid, 0, 1, 1, voxels.length, voxels);
 				for (int k = 0; k < voxels.length; k++) {
 					voxels[k] = (voxels[k] - a0[i] - b0[i] * floatEnergy[k])
 							/ (a1[i] - a0[i] + (b1[i] - b0[i]) * floatEnergy[k]);
-					if (e0 == 0 && k > 1 && voxels[k] > 0.5F)
-						e0 = floatEnergy[k - 1] + (floatEnergy[k] - floatEnergy[k - 1]) * (0.5F - voxels[k - 1])
+					if (e0_up == 0 && k > 1 && voxels[k] > e0Jump)
+						e0_up = floatEnergy[k - 1] + (floatEnergy[k] - floatEnergy[k - 1]) * (e0Jump - voxels[k - 1])
 								/ (voxels[k] - voxels[k - 1]);
 				}
+				for (int k = voxels.length - 1; k >= 0; k--) {
+					if (e0_down == 0 && k < voxels.length - 1 && voxels[k] < e0Jump)
+						e0_down = floatEnergy[k] + (floatEnergy[k + 1] - floatEnergy[k]) * (e0Jump - voxels[k])
+								/ (voxels[k + 1] - voxels[k]);
+				}
+				e0 = (e0_up + e0_down) / 2;
 				impNorm.getStack().setVoxels(i % wid, i / wid, 0, 1, 1, voxels.length, voxels);
 				pixelsFilter[i] = -1;// Byte signed integer -1 corresponds to unsigned integer 255 and HEX 0xFF.
 			}
-			pixelsE0[i] = e0;
-			if (e0 != 0)
+			if (e0 != 0) {
 				pixelsDmut[i] = a1[i] - a0[i] + (b1[i] - b0[i]) * e0;
+				pixelsE0[i] = e0;
+			}
 		}
 		IJ.log("\\Update:Normalizing all pixels...done.");
 		impE0.setDisplayRange(ImagingXAFSCommon.e0Min, ImagingXAFSCommon.e0Max);
