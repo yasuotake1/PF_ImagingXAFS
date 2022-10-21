@@ -23,7 +23,8 @@ public class Normalization implements PlugIn {
 	public void run(String arg) {
 	}
 
-	public static void Normalize(ImagePlus impSrc, float threshold, boolean show, boolean autoSave) {
+	public static void Normalize(ImagePlus impSrc, float threshold, boolean showSummary, boolean statsImages,
+			boolean autoSave) {
 		double[] energy = ImagingXAFSCommon.getPropEnergies(impSrc);
 		int[] indices = ImagingXAFSCommon.searchNormalizationIndices(energy);
 		if (indices == null)
@@ -57,6 +58,9 @@ public class Normalization implements PlugIn {
 		ImagePlus impStdDevPost = NewImage.createFloatImage("Standard deviation at post-edge", wid, hei, 1,
 				NewImage.FILL_BLACK);
 		float[] pixelsStdDevPost = (float[]) impStdDevPost.getProcessor().getPixels();
+		List<ImagePlus> impStats = new ArrayList<ImagePlus>();
+		Collections.addAll(impStats, impMeanPre, impSlopePre, impStdDevPre);
+		Collections.addAll(impStats, impMeanPost, impSlopePost, impStdDevPost);
 		double mean, stdDev;
 		StandardDeviation classStdDev = new StandardDeviation();
 		CurveFitter cf;
@@ -103,15 +107,27 @@ public class Normalization implements PlugIn {
 
 		}
 		IJ.log("\\Update:Calculating pre-edge and post-edge lines...done.");
-		if (show) {
-			List<ImagePlus> imps = new ArrayList<ImagePlus>();
-			Collections.addAll(imps, impMeanPre, impSlopePre, impStdDevPre);
-			Collections.addAll(imps, impMeanPost, impSlopePost, impStdDevPost);
-			for (ImagePlus imp : imps) {
+		if (showSummary) {
+			for (ImagePlus imp : impStats) {
 				imp.resetDisplayRange();
 				imp.setLut(new LUT(LutLoader.getLut("fire"), imp.getDisplayRangeMin(), imp.getDisplayRangeMax()));
 			}
-			ImagingXAFSResultWindow.create("Pre-edge and post-edge statistics of " + impSrc.getTitle(), 3, 2, imps);
+			ImagingXAFSResultWindow.create("Pre-edge and post-edge statistics of " + impSrc.getTitle(), 3, 2, impStats);
+		}
+		if (statsImages) {
+			impMeanPre.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeMean.tif");
+			impSlopePre.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeSlope.tif");
+			impStdDevPre
+					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeStdDev.tif");
+			impMeanPost.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeMean.tif");
+			impSlopePost
+					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeSlope.tif");
+			impStdDevPost
+					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeStdDev.tif");
+			for (ImagePlus imp : impStats) {
+				imp.setLut(new LUT(LutLoader.getLut("grays"), imp.getDisplayRangeMin(), imp.getDisplayRangeMax()));
+				imp.show();
+			}
 		}
 
 		IJ.log("Normalizing all pixels...");
@@ -159,7 +175,7 @@ public class Normalization implements PlugIn {
 		impE0.setDisplayRange(ImagingXAFSCommon.e0Min, ImagingXAFSCommon.e0Max);
 		IJ.run(impE0, "Jet", "");
 		impDmut.resetDisplayRange();
-		if (show) {
+		if (showSummary) {
 			List<ImagePlus> imps = new ArrayList<ImagePlus>();
 			Collections.addAll(imps, impFilter, impE0, impDmut);
 			ImagingXAFSResultWindow.create("Normalization summary of " + impSrc.getTitle(), 3, 1, imps);
@@ -173,6 +189,11 @@ public class Normalization implements PlugIn {
 		impDmut.show();
 		FileInfo fi = impSrc.getOriginalFileInfo();
 		if (autoSave && fi != null) {
+			if (statsImages) {
+				for (ImagePlus imp : impStats) {
+					IJ.saveAsTiff(imp, fi.directory + imp.getTitle());
+				}
+			}
 			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
 			IJ.saveAsTiff(impE0, fi.directory + impE0.getTitle());
 			IJ.saveAsTiff(impDmut, fi.directory + impDmut.getTitle());

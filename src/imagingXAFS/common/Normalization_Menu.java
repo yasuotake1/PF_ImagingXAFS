@@ -45,7 +45,7 @@ public class Normalization_Menu implements PlugIn {
 		float threshold = (float) gd.getNextNumber();
 		float e0Jump = (float) gd.getNextNumber();
 		if (e0Jump < 0 || e0Jump > 1) {
-			IJ.error("Normalized absorbance at E0 must be set within 0 and 1.");
+			IJ.error("Normalized absorbance at E0 must be within 0 and 1.");
 			return;
 		}
 		double e0Min = gd.getNextNumber();
@@ -57,11 +57,11 @@ public class Normalization_Menu implements PlugIn {
 		ImagingXAFSCommon.e0Jump = e0Jump;
 		ImagingXAFSCommon.e0Min = e0Min;
 		ImagingXAFSCommon.e0Max = e0Max;
-		boolean show = gd.getNextBoolean();
-		boolean create = gd.getNextBoolean();
+		boolean showSummary = gd.getNextBoolean();
+		boolean statsImages = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 
-		Normalization.Normalize(impSrc, threshold, show, autoSave);
+		Normalization.Normalize(impSrc, threshold, showSummary, statsImages, autoSave);
 	}
 
 }

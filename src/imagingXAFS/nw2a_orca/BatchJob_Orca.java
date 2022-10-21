@@ -40,9 +40,11 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
 		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 8, "eV");
-		gd.addNumericField("Filter threshold", 2);
+		gd.addNumericField("Filter threshold", 2.0, 1);
+		gd.addNumericField("Normalized absorbance at E0", 0.5, 2);
 		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 8, "eV");
 		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 8, "eV");
+		gd.addCheckbox("Create statistics images", false);
 		gd.addMessage("Singular value decomposition:");
 		gd.addCheckbox("Do SVD", true);
 		gd.addCheckbox("Clip at zero", true);
@@ -69,14 +71,21 @@ public class BatchJob_Orca implements PlugIn {
 		double postEnd = gd.getNextNumber();
 		ImagingXAFSCommon.normalizationParam = new double[] { preStart, preEnd, postStart, postEnd };
 		float threshold = (float) gd.getNextNumber();
+		float e0Jump = (float) gd.getNextNumber();
+		if (e0Jump < 0 || e0Jump > 1) {
+			IJ.error("Normalized absorbance at E0 must be within 0 and 1.");
+			return;
+		}
 		double e0Min = gd.getNextNumber();
 		double e0Max = gd.getNextNumber();
 		if (Double.isNaN(e0Min) || Double.isNaN(e0Max) || e0Min > e0Max) {
 			IJ.error("Invalid E0 minimum and/or maximum.");
 			return;
 		}
+		ImagingXAFSCommon.e0Jump = e0Jump;
 		ImagingXAFSCommon.e0Min = e0Min;
 		ImagingXAFSCommon.e0Max = e0Max;
+		boolean statsImages = gd.getNextBoolean();
 		boolean doSVD = gd.getNextBoolean();
 		boolean clip = gd.getNextBoolean();
 		boolean copy = gd.getNextBoolean();
@@ -168,7 +177,7 @@ public class BatchJob_Orca implements PlugIn {
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCorrected.show();
-			Normalization.Normalize(impCorrected, threshold, false, true);
+			Normalization.Normalize(impCorrected, threshold, false, statsImages, true);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
 			if (doSVD) {
