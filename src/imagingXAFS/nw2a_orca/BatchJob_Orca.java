@@ -180,6 +180,10 @@ public class BatchJob_Orca implements PlugIn {
 			Normalization.Normalize(impCorrected, threshold, false, statsImages, true);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
+			if (clip) {
+				Clip_Values.ClipValues(impDmut, 5F, 0F, 0F, false);
+				IJ.saveAsTiff(impDmut, impCorrected.getOriginalFileInfo().directory + impDmut.getTitle());
+			}
 			if (doSVD) {
 				SVD.setDataMatrix(impNorm);
 				SVD.doSVD(true);
