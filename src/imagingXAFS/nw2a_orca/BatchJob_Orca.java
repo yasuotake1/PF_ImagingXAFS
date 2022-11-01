@@ -127,7 +127,7 @@ public class BatchJob_Orca implements PlugIn {
 		IJ.run("Close All");
 		System.gc();
 
-		ImagePlus impMut, impCrop, impCorrected, impNorm, impDmut, impLast;
+		ImagePlus impMut, impCrop, impNorm, impDmut, impLast;
 		String baseName;
 		Instant startTime = Instant.now();
 		String first9809Path = strImg9809Path;
@@ -158,7 +158,7 @@ public class BatchJob_Orca implements PlugIn {
 					+ strBinning + " i0 energy_0 save";
 			IJ.run("Load ORCA-Flash imagestack", strOption);
 			impMut = Load_OrcaStack.impStack;
-			baseName = impMut.getTitle().replace(".tif", "");
+			baseName = impMut.getTitle().replace("_corrected", "").replace(".tif", "");
 			if (roi == null) {
 				impCrop = impMut;
 			} else {
@@ -166,23 +166,22 @@ public class BatchJob_Orca implements PlugIn {
 				impCrop = impMut.crop("stack");
 				impCrop.setFileInfo(impMut.getOriginalFileInfo());
 				impMut.close();
-				impCrop.setTitle(baseName);
 			}
+			impCrop.setTitle(baseName);
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
-			impCorrected = Load_OrcaStack.GetCorrectedStack(impCrop);
 			if (filter) {
 				IJ.log("Applying filter...");
-				GaussianBlur3D.blur(impCorrected, xsigma, ysigma, zsigma);
+				GaussianBlur3D.blur(impCrop, xsigma, ysigma, zsigma);
 				IJ.log("\\Update:Applying filter...done.");
 			}
-			impCorrected.show();
-			Normalization.Normalize(impCorrected, threshold, false, statsImages, true);
+			impCrop.show();
+			Normalization.Normalize(impCrop, threshold, false, statsImages, true);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
 			if (clip) {
 				Clip_Values.ClipValues(impDmut, 5F, 0F, 0F, false);
-				IJ.saveAsTiff(impDmut, impCorrected.getOriginalFileInfo().directory + impDmut.getTitle());
+				IJ.saveAsTiff(impDmut, impCrop.getOriginalFileInfo().directory + impDmut.getTitle());
 			}
 			if (doSVD) {
 				SVD.setDataMatrix(impNorm);
@@ -195,6 +194,14 @@ public class BatchJob_Orca implements PlugIn {
 					sufList.add("_LastImage.tif");
 					sufList.add("_Dmut.tif");
 					sufList.add("_E0.tif");
+					if(statsImages) {
+						sufList.add("_PreEdgeMean.tif");
+						sufList.add("_PreEdgeSlope.tif");
+						sufList.add("_PreEdgeStdDev.tif");
+						sufList.add("_PostEdgeMean.tif");
+						sufList.add("_PostEdgeSlope.tif");
+						sufList.add("_PostEdgeStdDev.tif");
+					}
 					if (doSVD) {
 						List<String> listComponents = SVD.getNames();
 						for (int j = 0; j < listComponents.size(); j++) {
@@ -202,9 +209,9 @@ public class BatchJob_Orca implements PlugIn {
 						}
 					}
 				}
-				impCorrected.setSlice(impCorrected.getNSlices());
-				impLast = new ImagePlus(baseName + "_LastImage.tif", impCorrected.getProcessor());
-				IJ.saveAsTiff(impLast, impCorrected.getOriginalFileInfo().directory + impLast.getTitle());
+				impCrop.setSlice(impCrop.getNSlices());
+				impLast = new ImagePlus(baseName + "_LastImage.tif", impCrop.getProcessor());
+				IJ.saveAsTiff(impLast, impCrop.getOriginalFileInfo().directory + impLast.getTitle());
 				for (int j = 0; j < sufList.size(); j++) {
 					Path srcCopy = Paths.get(getImg9809Dir(), baseName + sufList.get(j));
 					try {
