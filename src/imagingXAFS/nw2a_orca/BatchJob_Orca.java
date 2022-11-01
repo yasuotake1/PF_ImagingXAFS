@@ -155,7 +155,7 @@ public class BatchJob_Orca implements PlugIn {
 			IJ.log("Loading " + getImg9809Name() + "...");
 			strOption = "image=" + strImg9809Path + " reference=" + strRef9809Path + " constant="
 					+ String.valueOf((int) constantOffset) + " energy=" + String.valueOf(energyOffset) + " binning="
-					+ strBinning + " save";
+					+ strBinning + " i0 energy_0 save";
 			IJ.run("Load ORCA-Flash imagestack", strOption);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace(".tif", "");
