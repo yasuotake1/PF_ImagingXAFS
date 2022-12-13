@@ -175,27 +175,27 @@ public class Load_Ultra2DXANES implements PlugIn {
 			switch (imps[0].getType()) {
 			case ImagePlus.GRAY8:
 				byte[] srcB;
-				for (int i = 0; i < len; i++) {
+				for (int i = 1; i < len; i++) {
+					srcB = (byte[]) imps[i].getProcessor().getPixels();
 					for (int j = 0; j < tgt.length; j++) {
-						srcB = (byte[]) imps[i].getProcessor().getPixels();
 						tgt[j] += (int) (srcB[j] & 0xFF);
 					}
 				}
 				break;
 			case ImagePlus.GRAY16:
 				short[] srcS;
-				for (int i = 0; i < len; i++) {
+				for (int i = 1; i < len; i++) {
+					srcS = (short[]) imps[i].getProcessor().getPixels();
 					for (int j = 0; j < tgt.length; j++) {
-						srcS = (short[]) imps[i].getProcessor().getPixels();
 						tgt[j] += (int) (srcS[j] & 0xFFFF);
 					}
 				}
 				break;
 			default:// GRAY32
 				float[] srcF;
-				for (int i = 0; i < len; i++) {
+				for (int i = 1; i < len; i++) {
+					srcF = (float[]) imps[i].getProcessor().getPixels();
 					for (int j = 0; j < tgt.length; j++) {
-						srcF = (float[]) imps[i].getProcessor().getPixels();
 						tgt[j] += srcF[j];
 					}
 				}
