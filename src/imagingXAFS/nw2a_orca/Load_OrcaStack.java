@@ -56,19 +56,49 @@ public class Load_OrcaStack implements PlugIn {
 		OrcaProps prop = OrcaCommon.ReadProps();
 
 		int i = 0;
-		Path pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i) + ".img");
+		int j = 0;
+		boolean multi = false;
+		Path pathImg = Paths.get(strImg9809Path + "_000.img");
+		if (!Files.exists(pathImg)) {
+			pathImg = Paths.get(strImg9809Path + "_000_000.img");
+			if (!Files.exists(pathImg))
+				return;
+			multi = true;
+		}
+
 		Path pathRef = null;
 		if (!strRef9809Path.isEmpty() && Files.exists(pathRef9809)) {
-			pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i) + ".img");
+			pathRef = Paths.get(strRef9809Path + "_000.img");
 		}
 		ImageStack stack = null;
 		FileInfo fi = null;
 		ImagePlus impImg, impRef, impTgt;
 		ImageCalculator ic = new ImageCalculator();
+		short[] pixels;
+		int[] arr;
 		while (Files.exists(pathImg)) {
 			IJ.showStatus("Loading image " + String.format("%03d", i));
 			IJ.showProgress(i, energies.length);
 			impImg = OrcaCommon.LoadOrca(pathImg, prop);
+			if (multi) {
+				j = 0;
+				arr = new int[((short[]) impImg.getProcessor().getPixels()).length];
+				do {
+					impImg = OrcaCommon.LoadOrca(pathImg, prop);
+					pixels = (short[]) impImg.getProcessor().getPixels();
+					for (int k = 0; k < arr.length; k++) {
+						arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
+					}
+					j++;
+					pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + "_"
+							+ String.format("%03d", j) + ".img");
+				} while (Files.exists(pathImg));
+				for (int k = 0; k < arr.length; k++) {
+					arr[k] /= j;
+					pixels[k] = (short) (arr[k] > 32767 ? arr[k] - 65536 : arr[k]);
+				}
+				impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
+			}
 			if (impImg == null)
 				break;
 			if (ofsInt != 0)
@@ -94,10 +124,10 @@ public class Load_OrcaStack implements PlugIn {
 				impTgt = impImg;
 				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
 				if (norm) {
-					impTgt.getProcessor().multiply(1 / intImg[i]);
+					impTgt.getProcessor().multiply(intImg[0] / intImg[i]);
 				}
 			}
-			pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + ".img");
+			pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + (multi ? "_000.img" : ".img"));
 			stack.addSlice(impTgt.getTitle(), impTgt.getProcessor());
 
 			i++;

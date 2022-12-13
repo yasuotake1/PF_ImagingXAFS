@@ -17,25 +17,15 @@ import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageStatistics;
+import imagingXAFS.nw2a_orca.Load_SingleOrca;
 import imagingXAFS.nw2a_ultra.*;
 
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-		OpenDialog od = new OpenDialog("Dialog");
-		String path = od.getPath();
-		if (path == null)
-			return;
-		UltraScanInfo usi = null;
-		try {
-			usi = new UltraScanInfo(path);
-		} catch (NumberFormatException | IndexOutOfBoundsException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		File f = new File(usi.directory);
-		List<String> ls = Arrays.asList(f.list());
-		ls.forEach(item -> IJ.log(item));
+		short[] pixels = (short[]) WindowManager.getCurrentImage().getProcessor().getPixels();
+		IJ.log(String.valueOf(pixels[0]));
+		IJ.log(String.valueOf(pixels[0]<0?65536+pixels[0]:pixels[0]));
 	}
 
 }
