@@ -51,6 +51,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Copy files for stitching", true);
 		gd.addCheckbox("Perform grid stitching", true);
+		gd.addCheckbox("Complement tile positions of refinement failure", true);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -90,6 +91,7 @@ public class BatchJob_Orca implements PlugIn {
 		boolean clip = gd.getNextBoolean();
 		boolean copy = gd.getNextBoolean();
 		boolean stitch = gd.getNextBoolean();
+		boolean complement = gd.getNextBoolean();
 
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
@@ -194,7 +196,7 @@ public class BatchJob_Orca implements PlugIn {
 					sufList.add("_LastImage.tif");
 					sufList.add("_Dmut.tif");
 					sufList.add("_E0.tif");
-					if(statsImages) {
+					if (statsImages) {
 						sufList.add("_PreEdgeMean.tif");
 						sufList.add("_PreEdgeSlope.tif");
 						sufList.add("_PreEdgeStdDev.tif");
@@ -236,6 +238,9 @@ public class BatchJob_Orca implements PlugIn {
 				return;
 			}
 
+			if (complement) {
+				sti.doComplement();
+			}
 			ImagePlus impCurrent;
 			for (int i = 0; i < sufList.size(); i++) {
 				impCurrent = sti.doStitching(sufList.get(i));

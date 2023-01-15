@@ -13,15 +13,15 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 public class Stitching implements PlugIn {
-	
-	private static String[] choiceOrder = { "Right & Down                ", "Left & Down", "Right & Up", "Left & Up" };
+
+	public static String[] choiceOrder = { "Right & Down                ", "Left & Down", "Right & Up", "Left & Up" };
 	private String order;
-	private int sizeX;
-	private int sizeY;
-	private int overlap;
+	public int sizeX;
+	public int sizeY;
+	private double overlap;
 	private String dir = "";
-	private String output1 = "TileConfiguration.txt";
-	private String output2 = "TileConfiguration.registered.txt";
+	public String output1 = "TileConfiguration.txt";
+	public String output2 = "TileConfiguration.registered.txt";
 	private String firstFilePath = "";
 
 	public void run(String arg) {
@@ -32,10 +32,10 @@ public class Stitching implements PlugIn {
 
 	public boolean showDialog(int num) {
 		GenericDialog gd = new GenericDialog("Grid stitching");
-		gd.addChoice("Grid order: ", choiceOrder, choiceOrder[0]);
+		gd.addChoice("Grid_order", choiceOrder, choiceOrder[0]);
 		gd.addMessage("(Grid size X) * (Grid size Y) should be " + String.valueOf(num));
-		gd.addNumericField("Grid size X: ", 2, 0);
-		gd.addNumericField("Grid size Y: ", 2, 0);
+		gd.addNumericField("Grid_size_X", 2, 0);
+		gd.addNumericField("Grid_size_Y", 2, 0);
 		gd.addSlider("Tile overlap [%]", 0, 100, 10);
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -44,7 +44,7 @@ public class Stitching implements PlugIn {
 		order = gd.getNextChoice();
 		sizeX = (int) gd.getNextNumber();
 		sizeY = (int) gd.getNextNumber();
-		overlap = (int) gd.getNextNumber();
+		overlap = gd.getNextNumber();
 		return true;
 	}
 
@@ -67,6 +67,13 @@ public class Stitching implements PlugIn {
 			return false;
 		}
 		return true;
+	}
+
+	public void doComplement() {
+		String strOption = "configuration=" + dir + "/" + output2;
+		strOption += " grid_size_x=" + String.valueOf(sizeX) + " grid_size_y=" + String.valueOf(sizeY);
+		IJ.run("Complement tile positions of refinement failure...", strOption);
+		return;
 	}
 
 	public ImagePlus doStitching(String sufReplacement) {
@@ -129,5 +136,5 @@ public class Stitching implements PlugIn {
 		String[] strSplit = fileName.split("_[0-9]{3}");
 		return strSplit[strSplit.length - 1];
 	}
-	
+
 }
