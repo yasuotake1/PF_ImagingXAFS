@@ -70,7 +70,7 @@ public class Stitching implements PlugIn {
 	}
 
 	public void doComplement() {
-		String strOption = "configuration=" + dir + "/" + output2;
+		String strOption = "configuration_file=" + dir + output2;
 		strOption += " grid_size_x=" + String.valueOf(sizeX) + " grid_size_y=" + String.valueOf(sizeY);
 		IJ.run("Complement tile positions of refinement failure...", strOption);
 		return;
