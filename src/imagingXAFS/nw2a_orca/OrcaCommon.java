@@ -85,19 +85,37 @@ public class OrcaCommon implements PlugIn {
 	}
 
 	public static ImagePlus LoadOrca(Path path, OrcaProps prop) {
-		long size = 4194304;
+		FileInfo fi = new FileInfo();
+		fi.intelByteOrder = true;
 		try {
-			size = Files.size(path);
+			if (!Files.exists(path)) {
+				return null;
+			}
+			byte[] buffer = new byte[64];
+			InputStream is = new FileInputStream(path.toString());
+			is.read(buffer, 0, 64);
+			fi.width = prop.width = ((buffer[5] & 0xff) << 8) + (buffer[4] & 0xff);
+			fi.height = prop.height = ((buffer[7] & 0xff) << 8) + (buffer[6] & 0xff);
+			fi.longOffset = (long) (((buffer[3] & 0xff) << 8) + (buffer[2] & 0xff) + 64);
+			switch (((buffer[13] & 0xff) << 8) + (buffer[12] & 0xff)) {
+			case 0:
+				prop.bitDepth = 8;
+				fi.fileType = FileInfo.GRAY8;
+				break;
+			case 2:
+				prop.bitDepth = 16;
+				fi.fileType = FileInfo.GRAY16_UNSIGNED;
+				break;
+			case 3:
+				prop.bitDepth = 32;
+				fi.fileType = FileInfo.GRAY32_UNSIGNED;
+				break;
+			}
+			is.close();
 		} catch (IOException ex) {
 			IJ.error("Failed to load an ORCA-Flash image.");
 			return null;
 		}
-		FileInfo fi = new FileInfo();
-		fi.fileType = FileInfo.GRAY16_UNSIGNED;
-		fi.longOffset = size - (long) (prop.width * prop.height * prop.bitDepth / 8);
-		fi.width = prop.width;
-		fi.height = prop.height;
-		fi.intelByteOrder = true;
 		ImagePlus imp = Raw.open(path.toString(), fi);
 		fi.directory = IJ.addSeparator(path.getParent().toString());
 		fi.fileName = path.getFileName().toString();

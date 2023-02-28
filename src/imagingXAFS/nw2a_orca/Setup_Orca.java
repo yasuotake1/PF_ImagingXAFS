@@ -18,7 +18,7 @@ public class Setup_Orca implements PlugIn {
 		gd.addNumericField("Distance between crystals: ", readProps.dcmDistance, 1, 8, "mm");
 		gd.addNumericField("Width: ", readProps.width, 0);
 		gd.addNumericField("Height: ", readProps.height, 0);
-		gd.addChoice("Bit depth: ", choiceBitDepth, choiceBitDepth[1]);
+		gd.addChoice("Bit depth: ", choiceBitDepth, String.valueOf(readProps.bitDepth));
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;

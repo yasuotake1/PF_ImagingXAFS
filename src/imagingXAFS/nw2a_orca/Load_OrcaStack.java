@@ -66,9 +66,15 @@ public class Load_OrcaStack implements PlugIn {
 			multi = true;
 		}
 
+		boolean multiRef = false;
 		Path pathRef = null;
 		if (!strRef9809Path.isEmpty() && Files.exists(pathRef9809)) {
 			pathRef = Paths.get(strRef9809Path + "_000.img");
+			if (!Files.exists(pathRef)) {
+				pathRef = Paths.get(strRef9809Path + "_000_000.img");
+				if (Files.exists(pathRef))
+					multiRef = true;
+			}
 		}
 		ImageStack stack = null;
 		FileInfo fi = null;
@@ -110,7 +116,25 @@ public class Load_OrcaStack implements PlugIn {
 
 			if (pathRef != null && Files.exists(pathRef)) {
 				impRef = OrcaCommon.LoadOrca(pathRef, prop);
-				if (ofsInt != 0)
+				if (multiRef) {
+					j = 0;
+					arr = new int[((short[]) impRef.getProcessor().getPixels()).length];
+					do {
+						impRef = OrcaCommon.LoadOrca(pathRef, prop);
+						pixels = (short[]) impRef.getProcessor().getPixels();
+						for (int k = 0; k < arr.length; k++) {
+							arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
+						}
+						j++;
+						pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + "_"
+								+ String.format("%03d", j) + ".img");
+					} while (Files.exists(pathRef));
+					for (int k = 0; k < arr.length; k++) {
+						arr[k] /= j;
+						pixels[k] = (short) (arr[k] > 32767 ? arr[k] - 65536 : arr[k]);
+					}
+					impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
+				}				if (ofsInt != 0)
 					impRef.getProcessor().add(ofsInt);
 				impTgt = ic.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(
@@ -119,7 +143,7 @@ public class Load_OrcaStack implements PlugIn {
 				if (norm) {
 					impTgt.getProcessor().add(Math.log(intImg[i] / intRef[i]));
 				}
-				pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + ".img");
+				pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + (multiRef ? "_000.img" : ".img"));
 			} else {
 				impTgt = impImg;
 				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
@@ -145,6 +169,7 @@ public class Load_OrcaStack implements PlugIn {
 		impStack.setTitle(pathImg9809.getFileName().toString());
 		ImagingXAFSCommon.setPropEnergies(impStack, energies);
 		OrcaCommon.setCalibration(impStack, prop, intBin);
+		OrcaCommon.WriteProps(prop);
 		impStack.changes = false;
 		fi.fileName = impStack.getTitle();
 		impStack.setFileInfo(fi);

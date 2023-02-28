@@ -63,6 +63,7 @@ public class Load_SingleOrca implements PlugIn {
 		}
 		impTgt.setFileInfo(impImg.getOriginalFileInfo());
 		OrcaCommon.setCalibration(impTgt, prop, intBin);
+		OrcaCommon.WriteProps(prop);
 		impTgt.show();
 		IJ.run(impTgt, "Enhance Contrast...", "saturated=0.1");
 		impTgt.updateAndDraw();
