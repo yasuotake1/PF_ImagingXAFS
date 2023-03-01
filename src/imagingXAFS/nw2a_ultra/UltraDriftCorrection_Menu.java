@@ -33,6 +33,7 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		gd.addMessage("Preprocess:");
 		gd.addCheckbox("Use ROI for calculation", false);
 		gd.addNumericField("Gaussian blur sigma (radius)", 2.0, 1);
+		gd.addCheckbox("Edge detection", false);
 		gd.addMessage("Calculation:");
 		gd.addChoice("Calculate drift to", UltraDriftCorrection.calculationMode,
 				UltraDriftCorrection.calculationMode[0]);
@@ -52,6 +53,7 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		int slc = impSrc.getNSlices();
 		Roi roi = gd.getNextBoolean() ? impSrc.getRoi() : null;
 		double sigma = gd.getNextNumber();
+		boolean edge = gd.getNextBoolean();
 		int mode = gd.getNextChoiceIndex();
 		boolean subpixel = gd.getNextBoolean();
 		boolean plot = gd.getNextBoolean();
@@ -59,7 +61,7 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		boolean autoSave = gd.getNextBoolean();
 		UltraDriftCorrection udc = new UltraDriftCorrection();
 
-		ImagePlus impResult = udc.GetCorrectedStack(impSrc, sigma, roi, mode, subpixel);
+		ImagePlus impResult = udc.GetCorrectedStack(impSrc, sigma, edge, roi, mode, subpixel);
 		if (plot) {
 			Plot plotCorrel = new Plot("Drift correction results of " + impSrc.getTitle(), "Photon energy (eV)",
 					"Correlation");

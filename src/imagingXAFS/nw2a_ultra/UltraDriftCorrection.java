@@ -11,6 +11,8 @@ import ij.measure.Measurements;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.GaussianBlur;
+import ij.plugin.filter.RankFilters;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.PairWiseStitchingResult;
@@ -27,7 +29,7 @@ public class UltraDriftCorrection implements PlugIn {
 	public void run(String arg) {
 	}
 
-	public ImagePlus GetCorrectedStack(ImagePlus imp, double sigma, Roi roi, int mode, boolean subpixel) {
+	public ImagePlus GetCorrectedStack(ImagePlus imp, double sigma, boolean variance, Roi roi, int mode, boolean subpixel) {
 		double energy[] = ImagingXAFSCommon.getPropEnergies(imp);
 		if (energy == null)
 			return null;
@@ -40,11 +42,16 @@ public class UltraDriftCorrection implements PlugIn {
 		ImageStack stackSrc = imp.crop("stack").getStack();
 		GaussianBlur gb = new GaussianBlur();
 		ContrastEnhancer ce = new ContrastEnhancer();
+		RankFilters rf = new RankFilters();
 		ce.setNormalize(true);
 		for (int i = 1; i <= slc; i++) {
 			gb.blurGaussian(stackSrc.getProcessor(i), sigma);
 			ImageStatistics stats = ImageStatistics.getStatistics(stackSrc.getProcessor(i), Measurements.MIN_MAX, null);
 			ce.stretchHistogram(stackSrc.getProcessor(i), 0.1, stats);
+			if(variance) {
+				gb.blurGaussian(stackSrc.getProcessor(i), sigma);
+				rf.rank(stackSrc.getProcessor(i), sigma, RankFilters.VARIANCE);
+			}
 		}
 
 		StitchingParameters params = new StitchingParameters();
@@ -111,8 +118,11 @@ public class UltraDriftCorrection implements PlugIn {
 		impResult.setTitle(title);
 		fi.fileName = title;
 		impResult.setFileInfo(fi);
+		ImageProcessor ip;
 		for (int i = 0; i < slc; i++) {
-			impResult.getStack().getProcessor(i + 1).translate(ox[i], oy[i]);
+			ip = impResult.getStack().getProcessor(i + 1);
+			ip.setInterpolationMethod(ImageProcessor.BILINEAR);
+			ip.translate(ox[i], oy[i]);
 		}
 		impResult.setSlice(currentSlice);
 		imp.show();
