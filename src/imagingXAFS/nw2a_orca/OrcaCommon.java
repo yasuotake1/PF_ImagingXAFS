@@ -91,13 +91,11 @@ public class OrcaCommon implements PlugIn {
 			if (!Files.exists(path)) {
 				return null;
 			}
-			byte[] buffer = new byte[64];
-			InputStream is = new FileInputStream(path.toString());
-			is.read(buffer, 0, 64);
-			fi.width = prop.width = ((buffer[5] & 0xff) << 8) + (buffer[4] & 0xff);
-			fi.height = prop.height = ((buffer[7] & 0xff) << 8) + (buffer[6] & 0xff);
-			fi.longOffset = (long) (((buffer[3] & 0xff) << 8) + (buffer[2] & 0xff) + 64);
-			switch (((buffer[13] & 0xff) << 8) + (buffer[12] & 0xff)) {
+			byte[] buffer = readBytes(path.toString(), 0, 64);
+			fi.width = prop.width = (buffer[4] & 0xff) + ((buffer[5] & 0xff) << 8);
+			fi.height = prop.height = (buffer[6] & 0xff) + ((buffer[7] & 0xff) << 8);
+			fi.longOffset = (long) ((buffer[2] & 0xff) + ((buffer[3] & 0xff) << 8) + 64);
+			switch ((buffer[12] & 0xff) + ((buffer[13] & 0xff) << 8)) {
 			case 0:
 				prop.bitDepth = 8;
 				fi.fileType = FileInfo.GRAY8;
@@ -111,7 +109,6 @@ public class OrcaCommon implements PlugIn {
 				fi.fileType = FileInfo.GRAY32_UNSIGNED;
 				break;
 			}
-			is.close();
 		} catch (IOException ex) {
 			IJ.error("Failed to load an ORCA-Flash image.");
 			return null;
@@ -121,6 +118,19 @@ public class OrcaCommon implements PlugIn {
 		fi.fileName = path.getFileName().toString();
 		imp.setFileInfo(fi);
 		return imp;
+	}
+
+	public static byte[] readBytes(String strPath, int offset, int length) throws IOException {
+		try {
+			byte[] buffer = new byte[length];
+			InputStream is = new FileInputStream(strPath);
+			is.skip(offset);
+			is.read(buffer, 0, length);
+			is.close();
+			return buffer;
+		} catch (IOException ex) {
+			throw ex;
+		}
 	}
 
 	/**
