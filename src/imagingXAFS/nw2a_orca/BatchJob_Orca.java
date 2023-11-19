@@ -33,6 +33,8 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addNumericField("Constant dark offset", 100);
 		gd.addNumericField("Energy offset", 0, 2);
 		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
+		gd.addCheckbox("I0 normalization", true);
+		gd.addCheckbox("Save stack files", false);
 		gd.addMessage("Preprocess:");
 		gd.addCheckbox("Apply 3D Gaussian blur", false);
 		gd.addMessage("Normalization:");
@@ -51,7 +53,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Copy files for stitching", true);
 		gd.addCheckbox("Perform grid stitching", true);
-		gd.addCheckbox("Complement tile positions of refinement failure", true);
+		gd.addCheckbox("Complement tile positions of refinement failure", false);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -64,8 +66,15 @@ public class BatchJob_Orca implements PlugIn {
 		double constantOffset = gd.getNextNumber();
 		double energyOffset = gd.getNextNumber();
 		String strBinning = gd.getNextChoice();
+		boolean i0norm = gd.getNextBoolean();
+		boolean saveStack = gd.getNextBoolean();
 		boolean filter = gd.getNextBoolean();
 		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
+		if (energyOffset <= -0.01 || energyOffset >= 0.01) {
+			for (int i = 0; i < energy.length; i++) {
+				energy[i] += energyOffset;
+			}
+		}
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
 		double postStart = gd.getNextNumber();
@@ -92,11 +101,12 @@ public class BatchJob_Orca implements PlugIn {
 		boolean copy = gd.getNextBoolean();
 		boolean stitch = gd.getNextBoolean();
 		boolean complement = gd.getNextBoolean();
+		boolean showStitched = gd.getNextBoolean();
 
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strOption = "image=" + strImgPath + " reference=" + strRefPath + " binning=" + strBinning;
-		IJ.run("Load single ORCA-Flash image", strOption);
+		IJ.run("Load single ORCA image", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
 		new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.").show();
@@ -157,8 +167,8 @@ public class BatchJob_Orca implements PlugIn {
 			IJ.log("Loading " + getImg9809Name() + "...");
 			strOption = "image=" + strImg9809Path + " reference=" + strRef9809Path + " constant="
 					+ String.valueOf((int) constantOffset) + " energy=" + String.valueOf(energyOffset) + " binning="
-					+ strBinning + " i0 energy_0 save";
-			IJ.run("Load ORCA-Flash imagestack", strOption);
+					+ strBinning + (i0norm ? " i0" : "") + " energy_0" + (saveStack ? " save" : "");
+			IJ.run("Load ORCA imagestack", strOption);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace("_corrected", "").replace(".tif", "");
 			if (roi == null) {
@@ -178,7 +188,7 @@ public class BatchJob_Orca implements PlugIn {
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCrop.show();
-			Normalization.Normalize(impCrop, threshold, false, statsImages, true);
+			Normalization.Normalize(impCrop, threshold, false, statsImages, true, saveStack);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
 			if (clip) {
@@ -253,6 +263,10 @@ public class BatchJob_Orca implements PlugIn {
 					IJ.run("Enhance Contrast", "saturated=0.35");
 				}
 				IJ.saveAsTiff(impCurrent, dirStitch.toString() + "/" + impCurrent.getTitle());
+				if (!showStitched) {
+					impCurrent.close();
+				}
+				System.gc();
 			}
 		}
 

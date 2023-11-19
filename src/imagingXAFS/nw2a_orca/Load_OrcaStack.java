@@ -134,7 +134,8 @@ public class Load_OrcaStack implements PlugIn {
 						pixels[k] = (short) (arr[k] > 32767 ? arr[k] - 65536 : arr[k]);
 					}
 					impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
-				}				if (ofsInt != 0)
+				}
+				if (ofsInt != 0)
 					impRef.getProcessor().add(ofsInt);
 				impTgt = ic.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(
@@ -143,7 +144,8 @@ public class Load_OrcaStack implements PlugIn {
 				if (norm) {
 					impTgt.getProcessor().add(Math.log(intImg[i] / intRef[i]));
 				}
-				pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + (multiRef ? "_000.img" : ".img"));
+				pathRef = Paths
+						.get(strRef9809Path + "_" + String.format("%03d", i + 1) + (multiRef ? "_000.img" : ".img"));
 			} else {
 				impTgt = impImg;
 				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
@@ -171,16 +173,13 @@ public class Load_OrcaStack implements PlugIn {
 		OrcaCommon.setCalibration(impStack, prop, intBin);
 		OrcaCommon.WriteProps(prop);
 		impStack.changes = false;
+		if (corr) {
+			impStack = GetCorrectedStack(impStack);
+		}
 		fi.fileName = impStack.getTitle();
 		impStack.setFileInfo(fi);
 		if (autoSave) {
-			IJ.saveAsTiff(impStack, fi.getFilePath() + ".tif");
-		}
-		if (corr) {
-			impStack = GetCorrectedStack(impStack);
-			if (autoSave) {
-				IJ.saveAsTiff(impStack, fi.getFilePath() + "_corrected.tif");
-			}
+			IJ.saveAsTiff(impStack, fi.getFilePath());
 		}
 		impStack.show();
 		IJ.run(impStack, "Enhance Contrast...", "saturated=0.1 use");
@@ -239,7 +238,7 @@ public class Load_OrcaStack implements PlugIn {
 		if (impSrc.getTitle().endsWith(".tif"))
 			impTgt.setTitle(impSrc.getTitle().replace(".tif", "_corrected.tif"));
 		else
-			impTgt.setTitle(impSrc.getTitle() + "_corrected.tif");
+			impTgt.setTitle(impSrc.getTitle() + "_corrected");
 		impTgt.setSlice(currentSliceNumber);
 		impSrc.close();
 		return impTgt;

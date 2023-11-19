@@ -2,6 +2,8 @@ package imagingXAFS.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.Plot;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.measure.Measurements;
@@ -23,9 +26,6 @@ import imagingXAFS.nw2a_ultra.*;
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-		short[] pixels = (short[]) WindowManager.getCurrentImage().getProcessor().getPixels();
-		IJ.log(String.valueOf(pixels[0]));
-		IJ.log(String.valueOf(pixels[0]<0?65536+pixels[0]:pixels[0]));
 	}
 
 }

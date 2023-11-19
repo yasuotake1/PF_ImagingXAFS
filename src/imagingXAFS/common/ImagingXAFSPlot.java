@@ -17,8 +17,7 @@ public class ImagingXAFSPlot implements PlugIn {
 	static boolean hasData = false;
 	static Plot plot = new Plot("ImagingXAFS plot", "Photon energy (eV)", "Intensity or absorption");
 	static ImagingXAFSPlotWindow window;
-	static final Color[] colors = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00), new Color(0x008b8b),
-			new Color(0x00008b), new Color(0x8b008b), Color.DARK_GRAY, Color.BLACK };
+	static Color[] colors = ImagingXAFSCommon.listPlotColors;
 	static int idxColor = 0;
 	static final String styleData = "circle";
 	static final String styleFit = "line";

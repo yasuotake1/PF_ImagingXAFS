@@ -61,7 +61,7 @@ public class Normalization_Menu implements PlugIn {
 		boolean statsImages = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 
-		Normalization.Normalize(impSrc, threshold, showSummary, statsImages, autoSave);
+		Normalization.Normalize(impSrc, threshold, showSummary, statsImages, autoSave, autoSave);
 	}
 
 }
