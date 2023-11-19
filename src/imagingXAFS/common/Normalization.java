@@ -24,7 +24,7 @@ public class Normalization implements PlugIn {
 	}
 
 	public static void Normalize(ImagePlus impSrc, float threshold, boolean showSummary, boolean statsImages,
-			boolean autoSave) {
+			boolean saveResults, boolean saveStack) {
 		double[] energy = ImagingXAFSCommon.getPropEnergies(impSrc);
 		int[] indices = ImagingXAFSCommon.searchNormalizationIndices(energy);
 		if (indices == null)
@@ -188,15 +188,18 @@ public class Normalization implements PlugIn {
 		impDmut.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_Dmut.tif");
 		impDmut.show();
 		FileInfo fi = impSrc.getOriginalFileInfo();
-		if (autoSave && fi != null) {
+		if (saveResults && fi != null) {
 			if (statsImages) {
 				for (ImagePlus imp : impStats) {
 					IJ.saveAsTiff(imp, fi.directory + imp.getTitle());
 				}
 			}
-			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
+
 			IJ.saveAsTiff(impE0, fi.directory + impE0.getTitle());
 			IJ.saveAsTiff(impDmut, fi.directory + impDmut.getTitle());
+		}
+		if (saveStack && fi != null) {
+			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
 		}
 	}
 

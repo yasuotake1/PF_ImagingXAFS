@@ -1,8 +1,10 @@
 package imagingXAFS.common;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,8 @@ public class ImagingXAFSCommon implements PlugIn {
 	public static float e0Jump = 0.5F;
 	public static double e0Min = 7116.0;
 	public static double e0Max = 7124.0;
+	public 	static final Color[] listPlotColors = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00), new Color(0x008b8b),
+			new Color(0x00008b), new Color(0x8b008b), Color.DARK_GRAY, Color.BLACK };
 
 	public void run(String arg) {
 	}
@@ -106,7 +110,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	private static double[] readValues(Path path, boolean applyAtoEfor9809, int column) {
 		List<String> rows = new ArrayList<String>();
 		double[] values;
-		if (path == null) {
+		if (path == null || !Files.exists(path)) {
 			return null;
 		}
 
