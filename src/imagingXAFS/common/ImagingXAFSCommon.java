@@ -45,7 +45,7 @@ public class ImagingXAFSCommon implements PlugIn {
 
 		double[] energies;
 		try {
-			String[] tempEnergies = imp.getProp(keyEnergy).split(",", 1000);
+			String[] tempEnergies = imp.getProp(keyEnergy).split(",", 9999);
 			energies = new double[tempEnergies.length];
 			for (int i = 0; i < energies.length; i++) {
 				energies[i] = Double.parseDouble(tempEnergies[i]);

@@ -58,9 +58,9 @@ public class Load_OrcaStack implements PlugIn {
 		int i = 0;
 		int j = 0;
 		boolean multi = false;
-		Path pathImg = Paths.get(strImg9809Path + "_000.img");
+		Path pathImg = Paths.get(strImg9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img"));
 		if (!Files.exists(pathImg)) {
-			pathImg = Paths.get(strImg9809Path + "_000_000.img");
+			pathImg = Paths.get(strImg9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img"));
 			if (!Files.exists(pathImg))
 				return;
 			multi = true;
@@ -69,9 +69,9 @@ public class Load_OrcaStack implements PlugIn {
 		boolean multiRef = false;
 		Path pathRef = null;
 		if (!strRef9809Path.isEmpty() && Files.exists(pathRef9809)) {
-			pathRef = Paths.get(strRef9809Path + "_000.img");
+			pathRef = Paths.get(strRef9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img"));
 			if (!Files.exists(pathRef)) {
-				pathRef = Paths.get(strRef9809Path + "_000_000.img");
+				pathRef = Paths.get(strRef9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img"));
 				if (Files.exists(pathRef))
 					multiRef = true;
 			}
@@ -83,7 +83,7 @@ public class Load_OrcaStack implements PlugIn {
 		short[] pixels;
 		int[] arr;
 		while (Files.exists(pathImg)) {
-			IJ.showStatus("Loading image " + String.format("%03d", i));
+			IJ.showStatus("Loading image " + String.format(intImg.length > 999 ? "%04d" : "%03d", i));
 			IJ.showProgress(i, energies.length);
 			impImg = OrcaCommon.LoadOrca(pathImg, prop);
 			if (multi) {
@@ -96,8 +96,9 @@ public class Load_OrcaStack implements PlugIn {
 						arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
 					}
 					j++;
-					pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + "_"
-							+ String.format("%03d", j) + ".img");
+					pathImg = Paths
+							.get(strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+									+ "_" + String.format("%03d", j) + ".img");
 				} while (Files.exists(pathImg));
 				for (int k = 0; k < arr.length; k++) {
 					arr[k] /= j;
@@ -126,8 +127,9 @@ public class Load_OrcaStack implements PlugIn {
 							arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
 						}
 						j++;
-						pathRef = Paths.get(strRef9809Path + "_" + String.format("%03d", i + 1) + "_"
-								+ String.format("%03d", j) + ".img");
+						pathRef = Paths
+								.get(strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+										+ "_" + String.format("%03d", j) + ".img");
 					} while (Files.exists(pathRef));
 					for (int k = 0; k < arr.length; k++) {
 						arr[k] /= j;
@@ -144,8 +146,8 @@ public class Load_OrcaStack implements PlugIn {
 				if (norm) {
 					impTgt.getProcessor().add(Math.log(intImg[i] / intRef[i]));
 				}
-				pathRef = Paths
-						.get(strRef9809Path + "_" + String.format("%03d", i + 1) + (multiRef ? "_000.img" : ".img"));
+				pathRef = Paths.get(strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+						+ (multiRef ? "_000.img" : ".img"));
 			} else {
 				impTgt = impImg;
 				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
@@ -153,7 +155,8 @@ public class Load_OrcaStack implements PlugIn {
 					impTgt.getProcessor().multiply(intImg[0] / intImg[i]);
 				}
 			}
-			pathImg = Paths.get(strImg9809Path + "_" + String.format("%03d", i + 1) + (multi ? "_000.img" : ".img"));
+			pathImg = Paths.get(strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+					+ (multi ? "_000.img" : ".img"));
 			stack.addSlice(impTgt.getTitle(), impTgt.getProcessor());
 
 			i++;
