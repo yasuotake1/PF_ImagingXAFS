@@ -54,6 +54,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addCheckbox("Copy files for stitching", true);
 		gd.addCheckbox("Perform grid stitching", true);
 		gd.addCheckbox("Complement tile positions of refinement failure", false);
+		gd.addCheckbox("Show stitched images", true);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
