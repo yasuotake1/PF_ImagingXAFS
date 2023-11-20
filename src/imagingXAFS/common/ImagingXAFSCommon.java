@@ -39,7 +39,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 */
 	public static double[] getPropEnergies(ImagePlus imp) {
 		if (imp.getNSlices() < 2) {
-			IJ.error("This is not an imagestack.");
+			IJ.error("This is not an imagestack.\n"+imp.getTitle());
 			return null;
 		}
 

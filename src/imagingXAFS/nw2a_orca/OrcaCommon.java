@@ -173,4 +173,16 @@ public class OrcaCommon implements PlugIn {
 		calib.setUnit("um");
 		imp.setCalibration(calib);
 	}
+	
+	public static OrcaProps getDuplicatedProp(OrcaProps sourceProp) {
+		OrcaProps prop=new OrcaProps();
+		prop.bitDepth=sourceProp.bitDepth;
+		prop.dcmDirection=sourceProp.dcmDirection;
+		prop.dcmDistance=sourceProp.dcmDistance;
+		prop.detectorPosition=sourceProp.detectorPosition;
+		prop.height=sourceProp.height;
+		prop.pixelSize=sourceProp.pixelSize;
+		prop.width=sourceProp.width;
+		return prop;
+	}
 }

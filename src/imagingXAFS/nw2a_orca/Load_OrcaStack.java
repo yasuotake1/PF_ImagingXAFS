@@ -18,33 +18,44 @@ import ij.plugin.PlugIn;
 public class Load_OrcaStack implements PlugIn {
 
 	public static ImagePlus impStack;
+	static int ofsInt = -100;
+	static double ofsEne = 0.0;
+	static String strBinning = OrcaCommon.strBinning[0];
+	static boolean norm = true;
+	static boolean corr = true;
+	static boolean autoSave = true;
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
 		gd.addFileField("Image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format, if exists)", "");
-		gd.addNumericField("Constant dark offset", 100);
-		gd.addNumericField("Energy offset", 0, 2);
-		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
-		gd.addCheckbox("I0 normalization", true);
-		gd.addCheckbox("Energy correction", true);
-		gd.addCheckbox("Save automatically", true);
+		gd.addNumericField("Constant dark offset", -ofsInt);
+		gd.addNumericField("Energy offset", ofsEne, 2);
+		gd.addChoice("Binning", OrcaCommon.strBinning, strBinning);
+		gd.addCheckbox("I0 normalization", norm);
+		gd.addCheckbox("Energy correction", corr);
+		gd.addCheckbox("Save automatically", autoSave);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		String strImg9809Path = gd.getNextString();
-		Path pathImg9809 = Paths.get(strImg9809Path);
 		String strRef9809Path = gd.getNextString();
+		ofsInt = -(int) gd.getNextNumber();
+		ofsEne = gd.getNextNumber();
+		strBinning = gd.getNextChoice();
+		norm = gd.getNextBoolean();
+		corr = gd.getNextBoolean();
+		autoSave = gd.getNextBoolean();
+		setOptions(ofsInt, ofsEne, strBinning, norm, corr, autoSave);
+		Load(strImg9809Path, strRef9809Path);
+	}
+
+	public static void Load(String strImg9809Path, String strRef9809Path) {
+		Path pathImg9809 = Paths.get(strImg9809Path);
 		Path pathRef9809 = Paths.get(strRef9809Path);
 		if (strImg9809Path.isEmpty() || !Files.exists(pathImg9809))
 			return;
-		int ofsInt = -(int) gd.getNextNumber();
-		double ofsEne = gd.getNextNumber();
-		String strBinning = gd.getNextChoice();
-		boolean norm = gd.getNextBoolean();
-		boolean corr = gd.getNextBoolean();
-		boolean autoSave = gd.getNextBoolean();
 		double[] energies = ImagingXAFSCommon.readEnergies(pathImg9809);
 		if (ofsEne <= -0.01 || ofsEne >= 0.01) {
 			for (int i = 0; i < energies.length; i++) {
@@ -177,7 +188,7 @@ public class Load_OrcaStack implements PlugIn {
 		OrcaCommon.WriteProps(prop);
 		impStack.changes = false;
 		if (corr) {
-			impStack = GetCorrectedStack(impStack);
+			impStack = GetCorrectedStack(impStack, true);
 		}
 		fi.fileName = impStack.getTitle();
 		impStack.setFileInfo(fi);
@@ -190,7 +201,25 @@ public class Load_OrcaStack implements PlugIn {
 		IJ.setTool("multipoint");
 	}
 
-	public static ImagePlus GetCorrectedStack(ImagePlus impSrc) {
+	public static void setOptions(int _ofsInt, double _ofsEne, String _strBinning, boolean _norm, boolean _corr,
+			boolean _autoSave) {
+		ofsInt = _ofsInt;
+		ofsEne = _ofsEne;
+		strBinning = _strBinning;
+		norm = _norm;
+		corr = _corr;
+		autoSave = _autoSave;
+	}
+
+	public static int getOfsInt() {
+		return ofsInt;
+	}
+	
+	public static boolean getNorm() {
+		return norm;
+	}
+
+	public static ImagePlus GetCorrectedStack(ImagePlus impSrc, boolean showStatus) {
 		int[] Dimensions = impSrc.getDimensions();
 		int nSlices = Dimensions[3];
 		int currentSliceNumber = impSrc.getSlice();
@@ -208,9 +237,11 @@ public class Load_OrcaStack implements PlugIn {
 		float[] data2 = new float[Dimensions[0]];
 		float[] data3 = new float[Dimensions[0]];
 		for (int i = 0; i < Dimensions[1]; i++) {
-			IJ.showStatus(
-					"Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle() + "...");
-			IJ.showProgress(i, Dimensions[1]);
+			if(showStatus) {
+				IJ.showStatus(
+						"Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle() + "...");
+				IJ.showProgress(i, Dimensions[1]);
+			}
 			for (int j = 0; j < nSlices; j++) {
 				correctedEnergies[j] = OrcaCommon.getCorrectedE((double) i, (double) Dimensions[1] / 2, energies[j],
 						prop, impSrc.getCalibration());

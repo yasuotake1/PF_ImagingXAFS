@@ -166,10 +166,8 @@ public class BatchJob_Orca implements PlugIn {
 
 		for (int i = 0; i < rep; i++) {
 			IJ.log("Loading " + getImg9809Name() + "...");
-			strOption = "image=" + strImg9809Path + " reference=" + strRef9809Path + " constant="
-					+ String.valueOf((int) constantOffset) + " energy=" + String.valueOf(energyOffset) + " binning="
-					+ strBinning + (i0norm ? " i0" : "") + " energy_0" + (saveStack ? " save" : "");
-			IJ.run("Load ORCA imagestack", strOption);
+			Load_OrcaStack.setOptions((int) constantOffset,energyOffset,strBinning,i0norm,true,saveStack);
+			Load_OrcaStack.Load(strImg9809Path, strRef9809Path);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace("_corrected", "").replace(".tif", "");
 			if (roi == null) {
@@ -178,6 +176,7 @@ public class BatchJob_Orca implements PlugIn {
 				IJ.makeRectangle(roiX, roiY, roiWidth, roiHeight);
 				impCrop = impMut.crop("stack");
 				impCrop.setFileInfo(impMut.getOriginalFileInfo());
+				ImagingXAFSCommon.setPropEnergies(impCrop, ImagingXAFSCommon.getPropEnergies(impMut));
 				impMut.close();
 			}
 			impCrop.setTitle(baseName);

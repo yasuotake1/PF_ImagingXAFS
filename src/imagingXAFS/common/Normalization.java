@@ -30,8 +30,11 @@ public class Normalization implements PlugIn {
 		if (indices == null)
 			return;
 
-		IJ.log("Calculating pre-edge and post-edge lines...");
-		impSrc.hide();
+		boolean wasVisible = impSrc.isVisible();
+		if (wasVisible) {
+			impSrc.hide();
+			IJ.log("Calculating pre-edge and post-edge lines...");
+		}
 		double[] arrPreE = Arrays.copyOfRange(energy, indices[0], indices[1]);
 		double[] arrPreA = new double[arrPreE.length];
 		double[] arrPostE = Arrays.copyOfRange(energy, indices[2], indices[3]);
@@ -71,7 +74,8 @@ public class Normalization implements PlugIn {
 		float[] a1 = new float[len];
 		float[] b1 = new float[len];
 		for (int i = 0; i < len; i++) {
-			IJ.showProgress(i, len);
+			if (wasVisible)
+				IJ.showProgress(i, len);
 
 			impSrc.getStack().getVoxels(i % wid, i / wid, indices[0], 1, 1, voxelsPre.length, voxelsPre);
 			for (int j = 0; j < arrPreA.length; j++) {
@@ -106,7 +110,8 @@ public class Normalization implements PlugIn {
 			pixelsStdDevPost[i] = (float) stdDev;
 
 		}
-		IJ.log("\\Update:Calculating pre-edge and post-edge lines...done.");
+		if (wasVisible)
+			IJ.log("\\Update:Calculating pre-edge and post-edge lines...done.");
 		if (showSummary) {
 			for (ImagePlus imp : impStats) {
 				imp.resetDisplayRange();
@@ -130,7 +135,8 @@ public class Normalization implements PlugIn {
 			}
 		}
 
-		IJ.log("Normalizing all pixels...");
+		if (wasVisible)
+			IJ.log("Normalizing all pixels...");
 		impNorm = NewImage.createFloatImage(
 				impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_normalized.tif", wid, hei, slc,
 				NewImage.FILL_BLACK);
@@ -145,7 +151,8 @@ public class Normalization implements PlugIn {
 		float e0_up, e0_down, e0;
 		float e0Jump = ImagingXAFSCommon.e0Jump;
 		for (int i = 0; i < len; i++) {
-			IJ.showProgress(i, len);
+			if (wasVisible)
+				IJ.showProgress(i, len);
 			e0_up = e0_down = e0 = 0F;
 			if (isNotFiltered(a0[i], b0[i], a1[i], b1[i], floatEnergy, pixelsStdDevPre[i], pixelsStdDevPost[i],
 					threshold)) {
@@ -171,7 +178,8 @@ public class Normalization implements PlugIn {
 				pixelsE0[i] = e0;
 			}
 		}
-		IJ.log("\\Update:Normalizing all pixels...done.");
+		if (wasVisible)
+			IJ.log("\\Update:Normalizing all pixels...done.");
 		impE0.setDisplayRange(ImagingXAFSCommon.e0Min, ImagingXAFSCommon.e0Max);
 		IJ.run(impE0, "Jet", "");
 		impDmut.resetDisplayRange();
@@ -181,12 +189,8 @@ public class Normalization implements PlugIn {
 			ImagingXAFSResultWindow.create("Normalization summary of " + impSrc.getTitle(), 3, 1, imps);
 		}
 
-		impSrc.show();
-		impNorm.show();
 		impE0.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_E0.tif");
-		impE0.show();
 		impDmut.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_Dmut.tif");
-		impDmut.show();
 		FileInfo fi = impSrc.getOriginalFileInfo();
 		if (saveResults && fi != null) {
 			if (statsImages) {
@@ -200,6 +204,12 @@ public class Normalization implements PlugIn {
 		}
 		if (saveStack && fi != null) {
 			IJ.saveAsTiff(impNorm, fi.directory + impNorm.getTitle());
+		}
+		if (wasVisible) {
+			impSrc.show();
+			impNorm.show();
+			impE0.show();
+			impDmut.show();
 		}
 	}
 
