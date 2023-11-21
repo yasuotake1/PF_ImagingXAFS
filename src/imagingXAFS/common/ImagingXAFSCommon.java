@@ -20,7 +20,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	public static final double SpacSi111 = 3.13551;
 	public static final String keyEnergy = "Energies";
 	public static final double thresInterp = 0.005;
-	public static double[] normalizationParam = { 7080.0, 7105.0, 7140.0, 7310.0 };
+	public static double[] normalizationParam = { 7015.0, 7095.0, 7140.0, 7310.0 };
 	public static float e0Jump = 0.5F;
 	public static double e0Min = 7116.0;
 	public static double e0Max = 7124.0;
