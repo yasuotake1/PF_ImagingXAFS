@@ -24,8 +24,8 @@ public class ImagingXAFSCommon implements PlugIn {
 	public static float e0Jump = 0.5F;
 	public static double e0Min = 7116.0;
 	public static double e0Max = 7124.0;
-	public 	static final Color[] listPlotColors = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00), new Color(0x008b8b),
-			new Color(0x00008b), new Color(0x8b008b), Color.DARK_GRAY, Color.BLACK };
+	public static final Color[] listPlotColors = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00),
+			new Color(0x008b8b), new Color(0x00008b), new Color(0x8b008b), Color.DARK_GRAY, Color.BLACK };
 
 	public void run(String arg) {
 	}
@@ -39,7 +39,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 */
 	public static double[] getPropEnergies(ImagePlus imp) {
 		if (imp.getNSlices() < 2) {
-			IJ.error("This is not an imagestack.\n"+imp.getTitle());
+			IJ.error("This is not an imagestack.\n" + imp.getTitle());
 			return null;
 		}
 
@@ -64,7 +64,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 * keyEnergy.
 	 * 
 	 * @param imp
-	 * @param energies
+	 * @param energies Array of photon energy
 	 */
 	public static void setPropEnergies(ImagePlus imp, double[] energies) {
 		String[] temp_energies = new String[energies.length];
@@ -203,6 +203,15 @@ public class ImagingXAFSCommon implements PlugIn {
 		return Math.abs(idx - Math.round(idx)) > thresInterp;
 	}
 
+	/**
+	 * Searches for indices those specify pre- and post-edge regions based on
+	 * normalizationParam in photon energy.
+	 * 
+	 * @param energy Array of photon energy
+	 * @return indices[0], [1], [2], [3] are: Starting index of pre-edge region,
+	 *         final of pre-edge, starting of post-edge, final of post-edge,
+	 *         respectively.
+	 */
 	public static int[] searchNormalizationIndices(double[] energy) {
 		int[] indices = new int[4];
 		boolean bNaN = false;

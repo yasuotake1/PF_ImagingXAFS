@@ -9,6 +9,7 @@ import java.util.List;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
+import ij.gui.MessageDialog;
 import ij.plugin.PlugIn;
 
 public class Stitching_Complement implements PlugIn {
@@ -46,7 +47,12 @@ public class Stitching_Complement implements PlugIn {
 				}
 			}
 			if (sizeX < 3 || sizeY < 3 || listNames.size() != sizeX * sizeY) {
-				IJ.error("Invalid grid size.");
+				// Show message without aborting.
+				// IJ.error("Invalid grid size.");
+				MessageDialog md = new MessageDialog(IJ.getInstance(), "Complement tile positions",
+						"Invalid grid size.");
+				if (md != null)
+					md.dispose();
 				return;
 			}
 			float[] arrStepX = new float[(sizeX - 1) * sizeY];

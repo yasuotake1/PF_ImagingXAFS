@@ -34,6 +34,11 @@ public class OrcaCommon implements PlugIn {
 	public void run(String arg) {
 	}
 
+	/**
+	 * Reads parameters for loading ORCA images from the file specified in PropPath.
+	 * 
+	 * @return OrcaProps object contains parameters.
+	 */
 	public static OrcaProps ReadProps() {
 		Properties prop = new Properties();
 
@@ -65,6 +70,11 @@ public class OrcaCommon implements PlugIn {
 		return target;
 	}
 
+	/**
+	 * Writes parameters for loading ORCA images to the file specified in PropPath.
+	 * 
+	 * @param target OrcaProps object that contains parameters to be written.
+	 */
 	public static void WriteProps(OrcaProps target) {
 		Properties prop = new Properties();
 
@@ -84,6 +94,14 @@ public class OrcaCommon implements PlugIn {
 		}
 	}
 
+	/**
+	 * Reads single ITEX file. Image width, heights, data offset, and bitdepth are
+	 * read from heading 64 bytes.
+	 * 
+	 * @param path Path specifying the .img file to be read.
+	 * @param prop OrcaProps object that contains loading parameters.
+	 * @return ImagePlus 2D image.
+	 */
 	public static ImagePlus LoadOrca(Path path, OrcaProps prop) {
 		FileInfo fi = new FileInfo();
 		fi.intelByteOrder = true;
@@ -110,7 +128,7 @@ public class OrcaCommon implements PlugIn {
 				break;
 			}
 		} catch (IOException ex) {
-			IJ.error("Failed to load an ORCA-Flash image.");
+			IJ.error("Failed to load an ORCA image.");
 			return null;
 		}
 		ImagePlus imp = Raw.open(path.toString(), fi);
@@ -120,6 +138,15 @@ public class OrcaCommon implements PlugIn {
 		return imp;
 	}
 
+	/**
+	 * Reads binary file.
+	 * 
+	 * @param strPath
+	 * @param offset
+	 * @param length
+	 * @return
+	 * @throws IOException
+	 */
 	public static byte[] readBytes(String strPath, int offset, int length) throws IOException {
 		try {
 			byte[] buffer = new byte[length];
@@ -163,6 +190,14 @@ public class OrcaCommon implements PlugIn {
 		return ImagingXAFSCommon.AtoE(angle + corr);
 	}
 
+	/**
+	 * Sets the calibration to an image by using the specified pixel size and
+	 * binning.
+	 * 
+	 * @param imp
+	 * @param prop OrcaProps object that contains pixel size.
+	 * @param bin  Image binning applied when loading.
+	 */
 	public static void setCalibration(ImagePlus imp, OrcaProps prop, int bin) {
 		Calibration calib = new Calibration();
 		double pixelSize = prop.pixelSize;
@@ -173,16 +208,22 @@ public class OrcaCommon implements PlugIn {
 		calib.setUnit("um");
 		imp.setCalibration(calib);
 	}
-	
+
+	/**
+	 * Returns a deep copy of sourceProp.
+	 * 
+	 * @param sourceProp OrcaProps object.
+	 * @return OrcaProps object.
+	 */
 	public static OrcaProps getDuplicatedProp(OrcaProps sourceProp) {
-		OrcaProps prop=new OrcaProps();
-		prop.bitDepth=sourceProp.bitDepth;
-		prop.dcmDirection=sourceProp.dcmDirection;
-		prop.dcmDistance=sourceProp.dcmDistance;
-		prop.detectorPosition=sourceProp.detectorPosition;
-		prop.height=sourceProp.height;
-		prop.pixelSize=sourceProp.pixelSize;
-		prop.width=sourceProp.width;
+		OrcaProps prop = new OrcaProps();
+		prop.bitDepth = sourceProp.bitDepth;
+		prop.dcmDirection = sourceProp.dcmDirection;
+		prop.dcmDistance = sourceProp.dcmDistance;
+		prop.detectorPosition = sourceProp.detectorPosition;
+		prop.height = sourceProp.height;
+		prop.pixelSize = sourceProp.pixelSize;
+		prop.width = sourceProp.width;
 		return prop;
 	}
 }

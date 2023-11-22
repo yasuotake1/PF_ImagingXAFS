@@ -8,6 +8,10 @@ import ij.IJ;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 
+/**
+ * This class reads header information of an ITEX image file and shows them in
+ * the ImageJ Log window.
+ */
 public class Show_ITEXFileInfo implements PlugIn {
 
 	public void run(String arg) {
