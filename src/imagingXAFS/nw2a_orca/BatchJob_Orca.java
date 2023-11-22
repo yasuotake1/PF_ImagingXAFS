@@ -107,7 +107,7 @@ public class BatchJob_Orca implements PlugIn {
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strOption = "image=" + strImgPath + " reference=" + strRefPath + " binning=" + strBinning;
-		IJ.run("Load single ORCA image", strOption);
+		IJ.run("Load single ORCA image...", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
 		new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.").show();
