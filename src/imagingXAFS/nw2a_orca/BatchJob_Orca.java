@@ -30,9 +30,9 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addMessage("Source:");
 		gd.addFileField("First image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format)", "");
-		gd.addNumericField("Constant dark offset", 100);
-		gd.addNumericField("Energy offset", 0, 2);
-		gd.addChoice("Binning", OrcaCommon.strBinning, OrcaCommon.strBinning[0]);
+		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
+		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
 		gd.addCheckbox("I0 normalization", true);
 		gd.addCheckbox("Save stack files", false);
 		gd.addMessage("Preprocess:");
@@ -64,16 +64,16 @@ public class BatchJob_Orca implements PlugIn {
 		if (strImg9809Path.isEmpty() || !Files.exists(getPathImg9809()) || strRef9809Path.isEmpty()
 				|| !Files.exists(getPathRef9809()))
 			return;
-		double constantOffset = gd.getNextNumber();
-		double energyOffset = gd.getNextNumber();
-		String strBinning = gd.getNextChoice();
+		int _ofsInt = (int) gd.getNextNumber();
+		double _ofsEne = gd.getNextNumber();
+		String _strBinning = gd.getNextChoice();
 		boolean i0norm = gd.getNextBoolean();
 		boolean saveStack = gd.getNextBoolean();
 		boolean filter = gd.getNextBoolean();
 		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
-		if (energyOffset <= -0.01 || energyOffset >= 0.01) {
+		if (_ofsEne <= -0.01 || _ofsEne >= 0.01) {
 			for (int i = 0; i < energy.length; i++) {
-				energy[i] += energyOffset;
+				energy[i] += _ofsEne;
 			}
 		}
 		double preStart = gd.getNextNumber();
@@ -106,7 +106,8 @@ public class BatchJob_Orca implements PlugIn {
 
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
-		String strOption = "image=" + strImgPath + " reference=" + strRefPath + " binning=" + strBinning;
+		String strOption = "image=" + strImgPath + " reference=" + strRefPath;
+		strOption += " constant=" + String.valueOf(_ofsInt) + " binning=" + _strBinning;
 		IJ.run("Load single ORCA image...", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
@@ -166,7 +167,7 @@ public class BatchJob_Orca implements PlugIn {
 
 		for (int i = 0; i < rep; i++) {
 			IJ.log("Loading " + getImg9809Name() + "...");
-			Load_OrcaStack.setOptions((int) constantOffset,energyOffset,strBinning,i0norm,true,saveStack);
+			Load_OrcaStack.setOptions(_ofsInt, _ofsEne, _strBinning, i0norm, true, saveStack);
 			Load_OrcaStack.Load(strImg9809Path, strRef9809Path);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace("_corrected", "").replace(".tif", "");

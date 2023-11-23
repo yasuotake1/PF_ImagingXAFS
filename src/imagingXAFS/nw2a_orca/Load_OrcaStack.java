@@ -18,9 +18,6 @@ import ij.plugin.PlugIn;
 public class Load_OrcaStack implements PlugIn {
 
 	public static ImagePlus impStack;
-	static int ofsInt = -100;
-	static double ofsEne = 0.0;
-	static String strBinning = OrcaCommon.strBinning[0];
 	static boolean norm = true;
 	static boolean corr = true;
 	static boolean autoSave = true;
@@ -29,9 +26,9 @@ public class Load_OrcaStack implements PlugIn {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
 		gd.addFileField("Image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format, if exists)", "");
-		gd.addNumericField("Constant dark offset", -ofsInt);
-		gd.addNumericField("Energy offset", ofsEne, 2);
-		gd.addChoice("Binning", OrcaCommon.strBinning, strBinning);
+		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
+		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
 		gd.addCheckbox("I0 normalization", norm);
 		gd.addCheckbox("Energy correction", corr);
 		gd.addCheckbox("Save automatically", autoSave);
@@ -41,9 +38,9 @@ public class Load_OrcaStack implements PlugIn {
 
 		String strImg9809Path = gd.getNextString();
 		String strRef9809Path = gd.getNextString();
-		ofsInt = -(int) gd.getNextNumber();
-		ofsEne = gd.getNextNumber();
-		strBinning = gd.getNextChoice();
+		int ofsInt = (int) gd.getNextNumber();
+		double ofsEne = gd.getNextNumber();
+		String strBinning = gd.getNextChoice();
 		norm = gd.getNextBoolean();
 		corr = gd.getNextBoolean();
 		autoSave = gd.getNextBoolean();
@@ -57,9 +54,9 @@ public class Load_OrcaStack implements PlugIn {
 		if (strImg9809Path.isEmpty() || !Files.exists(pathImg9809))
 			return;
 		double[] energies = ImagingXAFSCommon.readEnergies(pathImg9809);
-		if (ofsEne <= -0.01 || ofsEne >= 0.01) {
+		if (OrcaCommon.ofsEne <= -0.01 || OrcaCommon.ofsEne >= 0.01) {
 			for (int i = 0; i < energies.length; i++) {
-				energies[i] += ofsEne;
+				energies[i] += OrcaCommon.ofsEne;
 			}
 		}
 		double[] intImg = ImagingXAFSCommon.readIntensities(pathImg9809);
@@ -119,8 +116,8 @@ public class Load_OrcaStack implements PlugIn {
 			}
 			if (impImg == null)
 				break;
-			if (ofsInt != 0)
-				impImg.getProcessor().add(ofsInt);
+			if (OrcaCommon.ofsInt != 0)
+				impImg.getProcessor().add(-OrcaCommon.ofsInt);
 			if (i == 0) {
 				stack = new ImageStack(impImg.getWidth(), impImg.getHeight());
 				fi = impImg.getOriginalFileInfo();
@@ -148,8 +145,8 @@ public class Load_OrcaStack implements PlugIn {
 					}
 					impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
 				}
-				if (ofsInt != 0)
-					impRef.getProcessor().add(ofsInt);
+				if (OrcaCommon.ofsInt != 0)
+					impRef.getProcessor().add(-OrcaCommon.ofsInt);
 				impTgt = ic.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(
 						impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i]) + " eV)");
@@ -175,9 +172,9 @@ public class Load_OrcaStack implements PlugIn {
 		OpenDialog.setDefaultDirectory(pathImg.getParent().toString());
 		impStack = new ImagePlus(pathImg9809.getFileName().toString(), stack);
 		int intBin = 1;
-		if (strBinning != OrcaCommon.strBinning[0]) {
+		if (OrcaCommon.strBinning != OrcaCommon.arrBinning[0]) {
 			try {
-				intBin = Integer.parseInt(strBinning);
+				intBin = Integer.parseInt(OrcaCommon.strBinning);
 				impStack = impStack.resize(prop.width / intBin, prop.height / intBin, "average");
 			} catch (NumberFormatException e) {
 			}
@@ -203,18 +200,14 @@ public class Load_OrcaStack implements PlugIn {
 
 	public static void setOptions(int _ofsInt, double _ofsEne, String _strBinning, boolean _norm, boolean _corr,
 			boolean _autoSave) {
-		ofsInt = _ofsInt;
-		ofsEne = _ofsEne;
-		strBinning = _strBinning;
+		OrcaCommon.ofsInt = _ofsInt;
+		OrcaCommon.ofsEne = _ofsEne;
+		OrcaCommon.strBinning = _strBinning;
 		norm = _norm;
 		corr = _corr;
 		autoSave = _autoSave;
 	}
 
-	public static int getOfsInt() {
-		return ofsInt;
-	}
-	
 	public static boolean getNorm() {
 		return norm;
 	}
@@ -237,9 +230,9 @@ public class Load_OrcaStack implements PlugIn {
 		float[] data2 = new float[Dimensions[0]];
 		float[] data3 = new float[Dimensions[0]];
 		for (int i = 0; i < Dimensions[1]; i++) {
-			if(showStatus) {
-				IJ.showStatus(
-						"Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle() + "...");
+			if (showStatus) {
+				IJ.showStatus("Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle()
+						+ "...");
 				IJ.showProgress(i, Dimensions[1]);
 			}
 			for (int j = 0; j < nSlices; j++) {
