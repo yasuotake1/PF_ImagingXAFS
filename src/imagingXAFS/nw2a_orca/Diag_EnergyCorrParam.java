@@ -23,7 +23,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		gd.addMessage("Data source:");
 		gd.addFileField("Image data file (9809 format)", "");
 		gd.addFileField("Reference data file (9809 format, if exists)", "");
-		gd.addNumericField("Constant dark offset", -Load_OrcaStack.getOfsInt());
+		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
 		gd.addCheckbox("I0 normalization", Load_OrcaStack.getNorm());
 		gd.addMessage("Normalization:");
 		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
@@ -45,7 +45,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 
 		String strImg9809Path = gd.getNextString();
 		String strRef9809Path = gd.getNextString();
-		int ofsInt = -(int) gd.getNextNumber();
+		int _ofsInt = (int) gd.getNextNumber();
 		boolean norm = gd.getNextBoolean();
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
@@ -65,7 +65,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		for (int i = 0; i < num; i++) {
 			arrPosition[i] = step * i + from;
 		}
-		Load_OrcaStack.setOptions(ofsInt, 0.0d, "1", norm, false, false);
+		Load_OrcaStack.setOptions(_ofsInt, 0.0d, "1", norm, false, false);
 		Load_OrcaStack.Load(strImg9809Path, strRef9809Path);
 		ImagePlus impSrc = Load_OrcaStack.impStack;
 		IJ.setTool("rect");
