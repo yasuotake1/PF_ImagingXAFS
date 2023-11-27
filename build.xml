@@ -23,6 +23,7 @@
  		</manifest>
  	</jar>
     <copy file="../PF_ImagingXAFS.jar" toDir="${pluginsDir}" />
+    <copy file="BL15A1Props.config" toDir="${pluginsDir}" />
     <copy file="OrcaProps.config" toDir="${pluginsDir}" />
   </target>
 </project>

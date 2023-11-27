@@ -223,14 +223,14 @@ public class ImagingXAFSCommon implements PlugIn {
 			return null;
 		}
 		for (int i = 0; i < energy.length; i++) {
-			if (indices[0] == 0 && energy[i] >= normalizationParam[0])
-				indices[0] = i;
-			if (indices[1] == 0 && energy[i] >= normalizationParam[1])
-				indices[1] = i - 1;
-			if (indices[2] == 0 && energy[i] >= normalizationParam[2])
-				indices[2] = i;
-			if (indices[3] == 0 && energy[i] >= normalizationParam[3])
-				indices[3] = i - 1;
+			indices[0] = Math.abs(normalizationParam[0] - energy[i]) < Math
+					.abs(normalizationParam[0] - energy[indices[0]]) ? i : indices[0];
+			indices[1] = Math.abs(normalizationParam[1] - energy[i]) < Math
+					.abs(normalizationParam[1] - energy[indices[1]]) ? i : indices[1];
+			indices[2] = Math.abs(normalizationParam[2] - energy[i]) < Math
+					.abs(normalizationParam[2] - energy[indices[2]]) ? i : indices[2];
+			indices[3] = Math.abs(normalizationParam[3] - energy[i]) < Math
+					.abs(normalizationParam[3] - energy[indices[3]]) ? i : indices[3];
 		}
 		if (indices[0] >= indices[1] || indices[2] >= indices[3]) {
 			IJ.error("Invalid pre-edge and post-edge region.");
@@ -298,6 +298,10 @@ public class ImagingXAFSCommon implements PlugIn {
 	 */
 	public static int getCurrentScreenHeight() {
 		return IJ.getInstance().getGraphicsConfiguration().getDevice().getDisplayMode().getHeight();
+	}
+
+	double getCloserNumber(double target, double candidate1, double candidate2) {
+		return Math.abs(target - candidate1) > Math.abs(target - candidate2) ? candidate2 : candidate1;
 	}
 
 }
