@@ -49,7 +49,7 @@ public class CorrelationPlotMask implements PlugIn {
 		String t1 = imp1.getTitle().replace(".tif", "");
 		String t2 = imp2.getTitle().replace(".tif", "");
 
-		Plot p = new Plot("Correlation plot " + String.valueOf(index), t1, t2);
+		Plot p = new Plot("Correlation plot " + index, t1, t2);
 		p.setFrameSize(400, 400);
 		p.setLimits(min1, max1, min2, max2);
 		p.add("dots", arr1, arr2);

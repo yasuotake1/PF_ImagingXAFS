@@ -119,7 +119,7 @@ public class Load_DmutE0Map implements PlugIn {
 		} while (isSeq && Files.exists(Paths.get(pathSrc)));
 
 		if (isSeq)
-			IJ.showStatus("Finished " + String.valueOf(rep) + " files.");
+			IJ.showStatus("Finished " + rep + " files.");
 
 		if (doStitch) {
 			Stitching sti = new Stitching();

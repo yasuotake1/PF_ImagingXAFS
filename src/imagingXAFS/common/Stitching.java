@@ -33,7 +33,7 @@ public class Stitching implements PlugIn {
 	public boolean showDialog(int num) {
 		GenericDialog gd = new GenericDialog("Grid stitching");
 		gd.addChoice("Grid_order", choiceOrder, choiceOrder[0]);
-		gd.addMessage("(Grid size X) * (Grid size Y) should be " + String.valueOf(num));
+		gd.addMessage("(Grid size X) * (Grid size Y) should be " + num);
 		gd.addNumericField("Grid_size_X", 2, 0);
 		gd.addNumericField("Grid_size_Y", 2, 0);
 		gd.addSlider("Tile overlap [%]", 0, 100, 10);
@@ -53,10 +53,10 @@ public class Stitching implements PlugIn {
 		dir = getDir(firstFilePath);
 		try {
 			String strOption = "type=[Grid: row-by-row] order=[" + order + "]";
-			strOption += " grid_size_x=" + String.valueOf(sizeX);
-			strOption += " grid_size_y=" + String.valueOf(sizeY);
-			strOption += " tile_overlap=" + String.valueOf(overlap);
-			strOption += " first_file_index_i=" + String.valueOf(getIndex(firstFilePath));
+			strOption += " grid_size_x=" + sizeX;
+			strOption += " grid_size_y=" + sizeY;
+			strOption += " tile_overlap=" + overlap;
+			strOption += " first_file_index_i=" + getIndex(firstFilePath);
 			strOption += " directory=" + dir;
 			strOption += " file_names=" + getPrefix(firstFilePath, true) + "{iii}" + getSuffix(firstFilePath);
 			strOption += " output_textfile_name=" + output1;
@@ -71,7 +71,7 @@ public class Stitching implements PlugIn {
 
 	public void doComplement() {
 		String strOption = "configuration_file=" + dir + output2;
-		strOption += " grid_size_x=" + String.valueOf(sizeX) + " grid_size_y=" + String.valueOf(sizeY);
+		strOption += " grid_size_x=" + sizeX + " grid_size_y=" + sizeY;
 		IJ.run("Complement tile positions of refinement failure...", strOption);
 		return;
 	}

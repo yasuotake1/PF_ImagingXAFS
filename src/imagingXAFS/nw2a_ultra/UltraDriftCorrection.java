@@ -29,7 +29,8 @@ public class UltraDriftCorrection implements PlugIn {
 	public void run(String arg) {
 	}
 
-	public ImagePlus GetCorrectedStack(ImagePlus imp, double sigma, boolean variance, Roi roi, int mode, boolean subpixel) {
+	public ImagePlus GetCorrectedStack(ImagePlus imp, double sigma, boolean variance, Roi roi, int mode,
+			boolean subpixel) {
 		double energy[] = ImagingXAFSCommon.getPropEnergies(imp);
 		if (energy == null)
 			return null;
@@ -48,7 +49,7 @@ public class UltraDriftCorrection implements PlugIn {
 			gb.blurGaussian(stackSrc.getProcessor(i), sigma);
 			ImageStatistics stats = ImageStatistics.getStatistics(stackSrc.getProcessor(i), Measurements.MIN_MAX, null);
 			ce.stretchHistogram(stackSrc.getProcessor(i), 0.1, stats);
-			if(variance) {
+			if (variance) {
 				gb.blurGaussian(stackSrc.getProcessor(i), sigma);
 				rf.rank(stackSrc.getProcessor(i), sigma, RankFilters.VARIANCE);
 			}
@@ -80,7 +81,7 @@ public class UltraDriftCorrection implements PlugIn {
 			pc[slc - 1] = cc[slc - 1] = 0.0;
 			ox[slc - 1] = oy[slc - 1] = 0.0;
 			for (int i = 1; i < slc; i++) {
-				IJ.showStatus("Caluculating drift " + String.valueOf(i) + "/" + String.valueOf(slc));
+				IJ.showStatus("Caluculating drift " + i + "/" + slc);
 				imp2 = new ImagePlus(labels[i - 1], stackSrc.getProcessor(i).duplicate());
 				result = PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, null, null, 1, 1, params);
 				pc[i - 1] = result.getPhaseCorrelation();
@@ -93,7 +94,7 @@ public class UltraDriftCorrection implements PlugIn {
 			pc[slc - 1] = cc[slc - 1] = 0.0;
 			ox[slc - 1] = oy[slc - 1] = 0.0;
 			for (int i = slc - 1; i > 0; i--) {
-				IJ.showStatus("Caluculating drift " + String.valueOf(slc - i) + "/" + String.valueOf(slc));
+				IJ.showStatus("Caluculating drift " + (slc - i) + "/" + slc);
 				imp1 = new ImagePlus(labels[i], stackSrc.getProcessor(i + 1).duplicate());
 				imp2 = new ImagePlus(labels[i - 1], stackSrc.getProcessor(i).duplicate());
 				result = PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, null, null, 1, 1, params);

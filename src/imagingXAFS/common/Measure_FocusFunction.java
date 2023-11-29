@@ -65,7 +65,7 @@ public class Measure_FocusFunction implements PlugIn {
 			plot.setColor(colors[i]);
 			plot.add(styleData, arrX, calcFocusFunction(imp.getStack(), method));
 			legend += i > 0 ? "\t" : "";
-			legend += "ROI " + String.valueOf(i + 1);
+			legend += "ROI " + (i + 1);
 		}
 		if (rois.length > 1) {
 			plot.setColor(Color.BLACK);

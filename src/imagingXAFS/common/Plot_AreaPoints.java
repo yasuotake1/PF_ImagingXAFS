@@ -59,7 +59,7 @@ public class Plot_AreaPoints implements PlugIn {
 				ImageStatistics stats = imp.getStatistics(Measurements.MEAN + Measurements.CENTROID);
 				arrInt[i] = stats.mean;
 			}
-			ImagingXAFSPlot.addData(energies, arrInt, "ROI " + String.valueOf(1 + idxOffset));
+			ImagingXAFSPlot.addData(energies, arrInt, "ROI " + (1 + idxOffset));
 		} else {
 			Point[] points = imp.getRoi().getContainedPoints();
 			for (int j = 0; j < points.length; j++) {
@@ -68,7 +68,7 @@ public class Plot_AreaPoints implements PlugIn {
 					imp.setSlice(i + 1);
 					arrInt[i] = (double) imp.getProcessor().getPixelValue(points[j].x, points[j].y);
 				}
-				ImagingXAFSPlot.addData(energies, arrInt, "Point " + String.valueOf(1 + idxOffset + j));
+				ImagingXAFSPlot.addData(energies, arrInt, "Point " + (1 + idxOffset + j));
 			}
 		}
 	}

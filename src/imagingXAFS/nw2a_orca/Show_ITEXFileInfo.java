@@ -28,10 +28,10 @@ public class Show_ITEXFileInfo implements PlugIn {
 			int type = (buffer[12] & 0xff) + ((buffer[13] & 0xff) << 8);
 			IJ.log("Directory=\"" + od.getDirectory() + "\"");
 			IJ.log("FileName=\"" + od.getFileName() + "\"");
-			IJ.log("Width=" + String.valueOf(width));
-			IJ.log("Height=" + String.valueOf(height));
+			IJ.log("Width=" + width);
+			IJ.log("Height=" + height);
 			IJ.log("FileType=" + getFileTypeString(type) + "");
-			IJ.log("CommentLength=" + String.valueOf(lenComment));
+			IJ.log("CommentLength=" + lenComment);
 			buffer = OrcaCommon.readBytes(path, 64, lenComment);
 			List<String> list = parseCSV(new String(buffer));
 			for (int i = 0; i < list.size(); i++) {
@@ -55,7 +55,7 @@ public class Show_ITEXFileInfo implements PlugIn {
 		case 3:
 			return "3: 32 Bit";
 		default:
-			return String.valueOf(type) + ": N/A";
+			return type + ": N/A";
 		}
 	}
 

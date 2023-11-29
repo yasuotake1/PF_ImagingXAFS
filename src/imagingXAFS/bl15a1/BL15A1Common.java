@@ -60,7 +60,6 @@ public class BL15A1Common implements PlugIn {
 				path = dir + prefix + "_qscan_1" + suffix;
 				file = new File(path);
 			}
-			IJ.log(path);
 			try {
 				FileReader in = new FileReader(path);
 				BufferedReader br = new BufferedReader(in);
@@ -121,7 +120,6 @@ public class BL15A1Common implements PlugIn {
 		scale[1] = yStep;
 		scale[2] = xOrigin;
 		scale[3] = yOrigin;
-		IJ.log(String.valueOf(xStep)+","+String.valueOf(yStep)+","+String.valueOf(xOrigin)+","+String.valueOf(yOrigin));
 		return scale;
 	}
 

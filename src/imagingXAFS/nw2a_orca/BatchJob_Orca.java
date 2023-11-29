@@ -107,7 +107,7 @@ public class BatchJob_Orca implements PlugIn {
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strOption = "image=" + strImgPath + " reference=" + strRefPath;
-		strOption += " constant=" + String.valueOf(_ofsInt) + " binning=" + _strBinning;
+		strOption += " constant=" + _ofsInt + " binning=" + _strBinning;
 		IJ.run("Load single ORCA image...", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
@@ -273,7 +273,7 @@ public class BatchJob_Orca implements PlugIn {
 
 		Instant endTime = Instant.now();
 		long elapsed = Duration.between(startTime, endTime).getSeconds();
-		IJ.log("Finished batch job. Elapsed time: " + String.valueOf(elapsed) + " seconds.");
+		IJ.log("Finished batch job. Elapsed time: " + elapsed + " seconds.");
 	}
 
 	private Path getPathImg9809() {

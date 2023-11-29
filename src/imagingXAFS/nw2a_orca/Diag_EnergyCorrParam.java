@@ -37,8 +37,8 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		gd.addNumericField("Detector position from", readProps.detectorPosition - 5000, 1, 8, "mm");
 		gd.addNumericField("to", readProps.detectorPosition + 5000, 1, 8, "mm");
 		gd.addNumericField("step", 1000, 1, 8, "mm");
-		gd.addMessage("Pixel size = " + String.valueOf(readProps.pixelSize) + " um");
-		gd.addMessage("Distance between crystals =" + String.valueOf(readProps.dcmDistance) + " mm");
+		gd.addMessage("Pixel size = " + readProps.pixelSize + " um");
+		gd.addMessage("Distance between crystals = " + readProps.dcmDistance + " mm");
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;

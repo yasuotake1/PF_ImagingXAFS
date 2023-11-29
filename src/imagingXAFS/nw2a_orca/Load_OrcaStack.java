@@ -231,7 +231,7 @@ public class Load_OrcaStack implements PlugIn {
 		float[] data3 = new float[Dimensions[0]];
 		for (int i = 0; i < Dimensions[1]; i++) {
 			if (showStatus) {
-				IJ.showStatus("Processing energy correction at y = " + String.valueOf(i) + " in " + impSrc.getTitle()
+				IJ.showStatus("Processing energy correction at y = " + i + " in " + impSrc.getTitle()
 						+ "...");
 				IJ.showProgress(i, Dimensions[1]);
 			}

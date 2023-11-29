@@ -33,8 +33,7 @@ public class ImagingXAFSResultWindow implements PlugIn {
 		else {
 			int rep = (num - 1) / 6 + 1;
 			for (int i = 0; i < rep; i++) {
-				create(title + "-" + String.valueOf(i + 1), 3, 2,
-						imps.subList(i * 6, Math.min(i * 6 + 6, imps.size())));
+				create(title + "-" + (i + 1), 3, 2, imps.subList(i * 6, Math.min(i * 6 + 6, imps.size())));
 			}
 		}
 	}

@@ -103,7 +103,7 @@ public class SVD implements PlugIn {
 		fileNamesStd.clear();
 		double[] arrInt;
 		for (int i = 0; i < num; i++) {
-			OpenDialog od = new OpenDialog("Open component " + String.valueOf(i + 1) + ".");
+			OpenDialog od = new OpenDialog("Open component " + (i + 1) + ".");
 			if (od.getPath() == null)
 				return false;
 			arrInt = getInterpolatedSpectrum(od.getPath(), energies);
@@ -118,7 +118,7 @@ public class SVD implements PlugIn {
 		OpenDialog.setLastDirectory(pathTemp);
 		if (showPlot) {
 			showStandards();
-			IJ.log("\\Update:Loading standards...loaded " + String.valueOf(num) + " spectra.");
+			IJ.log("\\Update:Loading standards...loaded " + num + " spectra.");
 		}
 
 		return true;
