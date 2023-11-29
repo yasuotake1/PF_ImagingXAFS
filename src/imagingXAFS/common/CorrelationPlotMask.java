@@ -2,8 +2,9 @@ package imagingXAFS.common;
 
 import ij.*;
 import ij.gui.*;
-import ij.io.OpenDialog;
+import ij.io.SaveDialog;
 import ij.plugin.*;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
@@ -15,25 +16,17 @@ public class CorrelationPlotMask implements PlugIn {
 	public static int id = 0;
 	private static ImagePlus imp1, imp2;
 	private static double[] arr1, arr2;
-	private static int wid, hei;
+	private static int widthSrc, heightSrc;
 
 	public void run(String arg) {
 	}
 
-	public static void showPlot(int index, ImagePlus _imp1, ImagePlus _imp2) {
-		if (_imp1 == null || _imp2 == null)
+	public static void showScatterPlot(int index, ImagePlus _imp1, ImagePlus _imp2) {
+		if (!checkAndAssign(_imp1, _imp2))
 			return;
-		imp1 = _imp1;
-		imp2 = _imp2;
-		wid = imp1.getWidth();
-		hei = imp1.getHeight();
-		if (wid != imp2.getWidth() || hei != imp2.getHeight()) {
-			IJ.error("Selected images have different size.");
-			return;
-		}
 
-		arr1 = new double[wid * hei];
-		arr2 = new double[wid * hei];
+		arr1 = new double[widthSrc * heightSrc];
+		arr2 = new double[widthSrc * heightSrc];
 		double max1 = arr1[0];
 		double min1 = arr1[0];
 		double max2 = arr2[0];
@@ -62,25 +55,66 @@ public class CorrelationPlotMask implements PlugIn {
 		if (gdSave.wasCanceled()) {
 			return;
 		}
-
-		OpenDialog od = new OpenDialog("Save As ");
-		String dir = od.getDirectory();
-		String fileCorr = od.getFileName();
+		SaveDialog sd = new SaveDialog("Save As ", "Correlation_" + t1 + "_" + t2, ".txt");
+		if (sd.getFileName() == null)
+			return;
 		try {
-			File file = new File(dir + fileCorr);
+			File file = new File(sd.getDirectory() + sd.getFileName());
 			FileWriter filewriter = new FileWriter(file);
 
 			String WriteText = t1 + "\t" + t2 + "\r\n";
 			filewriter.write(WriteText);
 
 			for (int i = 0; i < arr1.length; i++) {
-				WriteText = arr1[i] + "\t" + arr2[i] + "\r\n";
+				WriteText = String.format("%.3f", arr1[i]) + "\t" + String.format("%.3f", arr2[i]) + "\r\n";
 				filewriter.write(WriteText);
 			}
 			filewriter.close();
 		} catch (IOException e) {
 			System.out.println(e);
 		}
+	}
+
+	public static void showHeatMap(int index, ImagePlus _imp1, ImagePlus _imp2, int width, int height) {
+		if (!checkAndAssign(_imp1, _imp2))
+			return;
+
+		arr1 = new double[widthSrc * heightSrc];
+		arr2 = new double[widthSrc * heightSrc];
+		double max1 = arr1[0];
+		double min1 = arr1[0];
+		double max2 = arr2[0];
+		double min2 = arr2[0];
+		for (int i = 0; i < arr1.length; i++) {
+			arr1[i] = (double) ((float[]) imp1.getProcessor().getPixels())[i];
+			arr2[i] = (double) ((float[]) imp2.getProcessor().getPixels())[i];
+			max1 = arr1[i] > max1 ? arr1[i] : max1;
+			min1 = arr1[i] < min1 ? arr1[i] : min1;
+			max2 = arr2[i] > max2 ? arr2[i] : max2;
+			min2 = arr2[i] < min2 ? arr2[i] : min2;
+		}
+		String t1 = imp1.getTitle().replace(".tif", "");
+		String t2 = imp2.getTitle().replace(".tif", "");
+
+		ImagePlus impData = NewImage.createFloatImage("Correlation plot " + index, width, height, 1,
+				NewImage.FILL_BLACK);
+		FloatProcessor fp = (FloatProcessor) impData.getProcessor();
+		double bin1 = (max1 - min1) / (width - 1);
+		double bin2 = (max2 - min2) / (height - 1);
+		int idx1, idx2;
+		for (int i = 0; i < arr1.length; i++) {
+			idx1 = (int) ((arr1[i] - min1) / bin1);
+			idx2 = (int) ((arr2[i] - min2) / bin2);
+			fp.putPixelValue(idx1, idx2, fp.getPixelValue(idx1, idx2) + 1.0);
+		}
+		fp.flipVertical();
+		IJ.run(impData, "Jet", "");
+		impData.resetDisplayRange();
+		impData.show();
+		id = impData.getID();
+		IJ.log("Correlation plot " + index);
+		IJ.log("Horizontal: " + t1 + " " + min1 + " - " + max1);
+		IJ.log("Vertical: " + t2 + " " + min2 + " - " + max2);
 	}
 
 	public static void createMask(double zoom) {
@@ -124,7 +158,7 @@ public class CorrelationPlotMask implements PlugIn {
 			arrInMask[i] = ipFlat.getPixel(xInPlot, yInPlot) == 0;
 		}
 
-		ImagePlus impMask = NewImage.createByteImage("Correlation Mask", wid, hei, 1, NewImage.FILL_BLACK);
+		ImagePlus impMask = NewImage.createByteImage("Correlation Mask", widthSrc, heightSrc, 1, NewImage.FILL_BLACK);
 		byte[] pixels = (byte[]) impMask.getProcessor().getPixels();
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = (byte) (arrInMask[i] ? 255 : 0);
@@ -138,9 +172,9 @@ public class CorrelationPlotMask implements PlugIn {
 		if (imp1.getProcessor() != null) {
 			ImagePlus imp1Mask = imp1.duplicate();
 			imp1Mask.setTitle(imp1.getTitle().replace(".tif", "") + "_corrMask");
-			for (int i = 0; i < hei; i++) {
-				for (int j = 0; j < wid; j++) {
-					if (arrInMask[i * wid + j]) {
+			for (int i = 0; i < heightSrc; i++) {
+				for (int j = 0; j < widthSrc; j++) {
+					if (arrInMask[i * widthSrc + j]) {
 						imp1Mask.getProcessor().putPixelValue(j, i, Double.NaN);
 					}
 				}
@@ -154,9 +188,9 @@ public class CorrelationPlotMask implements PlugIn {
 		if (imp2.getProcessor() != null) {
 			ImagePlus imp2Mask = imp2.duplicate();
 			imp2Mask.setTitle(imp2.getTitle().replace(".tif", "") + "_corrMask");
-			for (int i = 0; i < hei; i++) {
-				for (int j = 0; j < wid; j++) {
-					if (arrInMask[i * wid + j]) {
+			for (int i = 0; i < heightSrc; i++) {
+				for (int j = 0; j < widthSrc; j++) {
+					if (arrInMask[i * widthSrc + j]) {
 						imp2Mask.getProcessor().putPixelValue(j, i, Double.NaN);
 					}
 				}
@@ -169,4 +203,19 @@ public class CorrelationPlotMask implements PlugIn {
 		}
 	}
 
+	private static boolean checkAndAssign(ImagePlus _imp1, ImagePlus _imp2) {
+		if (_imp1 == null || _imp2 == null) {
+			IJ.error("Null image(s).");
+			return false;
+		}
+		if (_imp1.getWidth() != _imp2.getWidth() || _imp1.getHeight() != _imp2.getHeight()) {
+			IJ.error("Selected images have different size.");
+			return false;
+		}
+		imp1 = _imp1;
+		imp2 = _imp2;
+		widthSrc = imp1.getWidth();
+		heightSrc = imp1.getHeight();
+		return true;
+	}
 }
