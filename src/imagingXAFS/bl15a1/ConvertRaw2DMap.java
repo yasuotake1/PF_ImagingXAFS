@@ -8,7 +8,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class ImportRaw2DMap implements PlugIn {
+public class ConvertRaw2DMap implements PlugIn {
 	FileWriter fw;
 
 	public void run(String arg) {
@@ -116,17 +116,21 @@ public class ImportRaw2DMap implements PlugIn {
 		} else {
 			if (DataTable.assign(od.getPath(), idxX, labels[idxX], idxY, labels[idxY])) {
 				countSrc = 1;
-
 				strScanInfo = DataTable.strScanInfo;
+				String name = od.getFileName();
+				int idx = name.lastIndexOf('.');
+				if (idx > 0)
+					name = name.substring(0, idx);
+				String path="";
 				for (int i = 0; i < labels.length; i++) {
 					if (listUse[i]) {
-						writeTextFile(od.getPath() + "_" + labels[i] + ".txt", DataTable.getSpreadSheetString(i, ","));
-						strScanInfo += "\n\"" + od.getPath() + "_" + labels[i] + ".txt\"";
+						path = od.getDirectory() + name + "_" + labels[i] + ".txt";
+						writeTextFile(path, DataTable.getSpreadSheetString(i, ","));
+						strScanInfo += "\n\"" + path + "\"";
 						countTgt++;
 					}
 				}
-
-				writeTextFile(od.getPath() + "_ScanInfo.txt", strScanInfo);
+				writeTextFile(od.getDirectory() + name + "_ScanInfo.txt", strScanInfo);
 			} else {
 				IJ.error("Invalid raw data file.");
 			}
