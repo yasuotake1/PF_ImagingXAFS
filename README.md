@@ -1,12 +1,5 @@
 # PF_ImagingXAFS
 ImageJ/Fiji plugin for Imaging XAFS data analysis at KEK-PF BL-15A1 and PF-AR NW2A.
-Using this plugin, one can  
-(1) Check an image (and apply reference if necessary).  
-(2) Import energy stack data.  
-(3) Pre-process the stack such as energy correction and drift correction if necessary.  
-(4) Show multiple roi/point spectra, normalize them by pre- and post-edge lines, and fit them using standard spectra.  
-(5) Normalize and fit (by singular value decomposition) whole energy stack.  
-(6) Process tiling/mosaic energy stacks with a batch job and stitch the results.
 
 **BL-15A1** is a semi-micro XAFS/XRF/XRD experiment beamline at the Photon Factory, KEK, Japan.  
 <https://doi.org/10.1088/1742-6596/425/7/072016>
@@ -14,18 +7,24 @@ Using this plugin, one can
 **NW2A** is a beamline for time-resolved and spatially-resolved XAFS experiments at the PF-AR, KEK, Japan.  
 <https://doi.org/10.1063/1.5084621>
 
+Using this plugin, one can  
+1. Check an image (and apply reference if necessary).
+1. Import energy stack data.
+1. Pre-process the stack such as energy correction and drift correction if necessary.
+1. Show multiple roi/point spectra, normalize them by pre- and post-edge lines, and fit them using standard spectra.
+1. Normalize and fit (by singular value decomposition) whole energy stack.  
+1. Process tiling/mosaic energy stacks with a batch job and stitch the results.
+
 # Subpackages
-**imagingXAFS.common** contains the common functions for Imaging XAFS analysis shared within this plugin.
-
-**imagingXAFS.bl15a1** is to be developped.
-
-**imagingXAFS.nw2a_orca** contains data import, pre-process, and batch-job operations for direct-projection Imaging XAFS measurement using Hamamatsu ORCA-Flash at PF-AR NW2A.
+- **imagingXAFS.common** contains the common functions for Imaging XAFS analysis shared within this plugin, as shown above.
+- **imagingXAFS.bl15a1** contains XRF/XANES map data import, apply reference, work with correlation plot of two images, and export Tiff files for TXM XANES Wizard.
+BL15A1Props.config is used to store data import parameters.
+- **imagingXAFS.nw2a_orca** contains data import, pre-process, and batch-job operations for direct-projection Imaging XAFS measurement using Hamamatsu ORCA-Flash or ORCA-Quest at PF-AR NW2A.
 OrcaProps.config is used to store data import and energy correction parameters.
-
-**imagingXAFS.nw2a_ultra** is for zoneplate-projection 2D XANES / Mosaic 2D XANES measurement using Zeiss Ultra XRM at PF-AR NW2A.
+- **imagingXAFS.nw2a_ultra** is for zoneplate-projection 2D XANES / Mosaic 2D XANES measurement using Zeiss Ultra XRM at PF-AR NW2A.
 
 # Installation
-Place 'PF_ImaginagXAFS.jar', 'commons-math3-3.6.1.jar', 'poi-3.17.jar', and 'OrcaProps.config' in /plugins/PF_ImagingXAFS/.  
+Place 'PF_ImaginagXAFS.jar', 'commons-math3-3.6.1.jar', 'poi-3.17.jar', 'BL15A1Props.config', and 'OrcaProps.config' in /plugins/PF_ImagingXAFS/.  
 Place 'Jet.lut' in /luts/.  
 If your ImageJ/Fiji already has installed [mrsutherland/XRM_Reader](https://github.com/mrsutherland/XRM_Reader "mrsutherland/XRM_Reader: ImageJ plugin to read xrm files.") 
 plugin, remove it to avoid conflicts.  
