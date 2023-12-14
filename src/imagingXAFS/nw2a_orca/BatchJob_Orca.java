@@ -31,6 +31,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addFileField("First transmission images (9809 format)", OrcaCommon.strImg);
 		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
+		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
 		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
 		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
@@ -42,6 +43,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
 		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 8, "eV");
+		gd.addCheckbox("Zero-slope pre-edge", false);
 		gd.addNumericField("Filter threshold", 2.0, 1);
 		gd.addNumericField("Normalized absorbance at E0", 0.5, 2);
 		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 8, "eV");
@@ -65,6 +67,7 @@ public class BatchJob_Orca implements PlugIn {
 		if (!ImagingXAFSCommon.isExistingPath(strImg9809Path)
 				|| !(ImagingXAFSCommon.isExistingPath(strRef9809Path) || OrcaCommon.isInteger(strRef9809Path)))
 			return;
+		OrcaCommon.avoidZero = gd.getNextBoolean();
 		OrcaCommon.strBinning = gd.getNextChoice();
 		OrcaCommon.ofsEne = gd.getNextNumber();
 		boolean i0Corr = gd.getNextBoolean();
@@ -81,6 +84,7 @@ public class BatchJob_Orca implements PlugIn {
 		double postStart = gd.getNextNumber();
 		double postEnd = gd.getNextNumber();
 		ImagingXAFSCommon.normalizationParam = new double[] { preStart, preEnd, postStart, postEnd };
+		boolean zeroSlope = gd.getNextBoolean();
 		float threshold = (float) gd.getNextNumber();
 		float e0Jump = (float) gd.getNextNumber();
 		if (e0Jump < 0 || e0Jump > 1) {
@@ -107,7 +111,7 @@ public class BatchJob_Orca implements PlugIn {
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strOption = "transmission=" + strImgPath + " reference=" + strRefPath;
-		strOption += " dark=" + strDark + " binning=" + OrcaCommon.strBinning;
+		strOption += " dark=" + strDark + (OrcaCommon.avoidZero ? " avoid" : "") + " binning=" + OrcaCommon.strBinning;
 		IJ.run("Load single ORCA image...", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
@@ -189,7 +193,7 @@ public class BatchJob_Orca implements PlugIn {
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCrop.show();
-			Normalization.Normalize(impCrop, threshold, false, statsImages, true, saveStack);
+			Normalization.Normalize(impCrop, zeroSlope, threshold, false, statsImages, true, saveStack);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
 			if (clip) {

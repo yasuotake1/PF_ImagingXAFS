@@ -21,6 +21,7 @@ public class Load_SingleOrca implements PlugIn {
 		gd.addFileField("Transmission image", OrcaCommon.strImg);
 		gd.addFileField("Reference image or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
+		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
 		gd.addMessage(msg);
 		gd.showDialog();
@@ -36,6 +37,7 @@ public class Load_SingleOrca implements PlugIn {
 		OrcaCommon.strImg = strImg;
 		OrcaCommon.strRef = strRef;
 		OrcaCommon.setDark(strDark);
+		OrcaCommon.avoidZero = gd.getNextBoolean();
 		OrcaCommon.strBinning = gd.getNextChoice();
 
 		OrcaProps prop = OrcaCommon.readProps();

@@ -30,6 +30,7 @@ public class Load_OrcaStack implements PlugIn {
 		gd.addFileField("Transmission images (9809 format)", OrcaCommon.strImg);
 		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
+		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
 		gd.addMessage(msg);
 		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
@@ -48,6 +49,7 @@ public class Load_OrcaStack implements PlugIn {
 		OrcaCommon.strImg = strImg9809;
 		OrcaCommon.strRef = strRef9809;
 		OrcaCommon.setDark(strDark);
+		OrcaCommon.avoidZero = gd.getNextBoolean();
 		OrcaCommon.strBinning = gd.getNextChoice();
 		OrcaCommon.ofsEne = gd.getNextNumber();
 		i0Corr = gd.getNextBoolean();
@@ -144,8 +146,8 @@ public class Load_OrcaStack implements PlugIn {
 							arrInt[k] += arrShort[k] < 0 ? 65536 + arrShort[k] : arrShort[k];
 						}
 						j++;
-						strRef = strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i)
-								+ "_" + String.format("%03d", j) + ".img";
+						strRef = strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i) + "_"
+								+ String.format("%03d", j) + ".img";
 					} while (ImagingXAFSCommon.isExistingPath(strRef));
 					for (int k = 0; k < arrInt.length; k++) {
 						arrInt[k] /= j;

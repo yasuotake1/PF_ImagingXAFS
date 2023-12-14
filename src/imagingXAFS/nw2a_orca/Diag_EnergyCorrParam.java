@@ -24,6 +24,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		gd.addFileField("Transmission images (9809 format)", OrcaCommon.strImg);
 		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
+		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
 		gd.addMessage("");
 		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
 		gd.addMessage("Normalization:");
@@ -31,6 +32,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
 		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 8, "eV");
+		gd.addCheckbox("Zero-slope pre-edge", false);
 		gd.addNumericField("Filter threshold", 2.0, 1);
 		gd.addNumericField("Normalized absorbance at E0", 0.5, 2);
 		gd.addMessage("Correction parameters:");
@@ -50,6 +52,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		if (!ImagingXAFSCommon.isExistingPath(strImg9809))
 			return;
 		OrcaCommon.setDark(strDark);
+		OrcaCommon.avoidZero = gd.getNextBoolean();
 		OrcaCommon.strBinning = OrcaCommon.arrBinning[0];
 		OrcaCommon.ofsEne = 0d;
 		boolean i0Corr = gd.getNextBoolean();
@@ -57,6 +60,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		double preEnd = gd.getNextNumber();
 		double postStart = gd.getNextNumber();
 		double postEnd = gd.getNextNumber();
+		boolean zeroSlope = gd.getNextBoolean();
 		float threshold = (float) gd.getNextNumber();
 		float e0Jump = (float) gd.getNextNumber();
 		double from = gd.getNextNumber();
@@ -107,7 +111,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 			prop.detectorPosition = arrPosition[i];
 			OrcaCommon.writeProps(prop);
 			impCorr = Load_OrcaStack.GetCorrectedStack(impCrop, false);
-			Normalization.Normalize(impCorr, threshold, false, false, false, false);
+			Normalization.Normalize(impCorr, zeroSlope, threshold, false, false, false, false);
 			impE0 = Normalization.impE0;
 			stack.addSlice(impE0.getProcessor());
 			for (int j = 0; j < hei; j++) {

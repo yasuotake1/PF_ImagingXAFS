@@ -38,8 +38,9 @@ public class OrcaCommon implements PlugIn {
 							// by impDark
 	private static ImagePlus impDark;
 	private static int constDark = 0;
-	static double ofsEne = 0.0;
+	static boolean avoidZero = false;
 	static String strBinning = arrBinning[0];
+	static double ofsEne = 0.0;
 
 	public void run(String arg) {
 	}
@@ -107,12 +108,12 @@ public class OrcaCommon implements PlugIn {
 	/**
 	 * Reads single ITEX file. Image width, heights, data offset, and bitdepth are
 	 * read from heading 64 bytes. It subtracts constant or dark image set by
-	 * modeDark if subtactDark=true. Call setDark(String, OrcaProps) to specify the
-	 * subtraction method prior to calling this method.
+	 * modeDark if subtactDark=true.
 	 * 
 	 * @param path         Path specifying the .img file to be read.
 	 * @param prop         OrcaProps object that contains loading parameters.
-	 * @param subtractDark
+	 * @param subtractDark It subtracts dark image/counts predefined by
+	 *                     setDark(String, OrcaProps).
 	 * @return ImagePlus 2D image.
 	 */
 	public static ImagePlus loadOrca(String path, OrcaProps prop, boolean subtractDark) {
@@ -160,6 +161,10 @@ public class OrcaCommon implements PlugIn {
 			default:
 				break;
 			}
+		}
+		if (avoidZero) {
+			imp.getProcessor().add(-1);
+			imp.getProcessor().add(1);
 		}
 		fi.directory = IJ.addSeparator(p.getParent().toString());
 		fi.fileName = p.getFileName().toString();

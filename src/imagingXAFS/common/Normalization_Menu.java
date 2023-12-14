@@ -24,6 +24,7 @@ public class Normalization_Menu implements PlugIn {
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 7, "eV");
 		gd.addMessage(
 				"Note for Filter threshold (Ft): Pixels at which\n(pre- and post-edge lines separation) < (StdDev@pre + StdDev@post) * Ft\nare filtered.");
+		gd.addCheckbox("Zero-slope pre-edge", false);
 		gd.addNumericField("Filter threshold", 2.0, 1);
 		gd.addNumericField("Normalized absorbance at E0", 0.5, 2);
 		gd.addMessage("E0 plot range (can be modified afterwards):");
@@ -42,6 +43,7 @@ public class Normalization_Menu implements PlugIn {
 		double postStart = gd.getNextNumber();
 		double postEnd = gd.getNextNumber();
 		ImagingXAFSCommon.normalizationParam = new double[] { preStart, preEnd, postStart, postEnd };
+		boolean zeroSlope = gd.getNextBoolean();
 		float threshold = (float) gd.getNextNumber();
 		float e0Jump = (float) gd.getNextNumber();
 		if (e0Jump < 0 || e0Jump > 1) {
@@ -61,7 +63,7 @@ public class Normalization_Menu implements PlugIn {
 		boolean statsImages = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 
-		Normalization.Normalize(impSrc, threshold, showSummary, statsImages, autoSave, autoSave);
+		Normalization.Normalize(impSrc, zeroSlope, threshold, showSummary, statsImages, autoSave, autoSave);
 	}
 
 }

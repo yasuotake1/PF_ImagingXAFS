@@ -23,12 +23,14 @@ public class Normalization implements PlugIn {
 	public void run(String arg) {
 	}
 
-	public static void Normalize(ImagePlus impSrc, float threshold, boolean showSummary, boolean statsImages,
-			boolean saveResults, boolean saveStack) {
+	public static void Normalize(ImagePlus impSrc, boolean zeroSlope, float threshold, boolean showSummary,
+			boolean statsImages, boolean saveResults, boolean saveStack) {
 		double[] energy = ImagingXAFSCommon.getPropEnergies(impSrc);
 		int[] indices = ImagingXAFSCommon.searchNormalizationIndices(energy);
 		if (indices == null)
 			return;
+
+		String baseName = impSrc.getTitle().replace("_corrected", "").replace(".tif", "");
 
 		boolean wasVisible = impSrc.isVisible();
 		if (wasVisible) {
@@ -64,7 +66,6 @@ public class Normalization implements PlugIn {
 		List<ImagePlus> impStats = new ArrayList<ImagePlus>();
 		Collections.addAll(impStats, impMeanPre, impSlopePre, impStdDevPre);
 		Collections.addAll(impStats, impMeanPost, impSlopePost, impStdDevPost);
-		double mean, stdDev;
 		StandardDeviation classStdDev = new StandardDeviation();
 		CurveFitter cf;
 		float[] voxelsPre = new float[arrPreA.length];
@@ -81,33 +82,34 @@ public class Normalization implements PlugIn {
 			for (int j = 0; j < arrPreA.length; j++) {
 				arrPreA[j] = (double) voxelsPre[j];
 			}
-			mean = Arrays.stream(arrPreA).average().getAsDouble();
-			pixelsMeanPre[i] = (float) mean;
-			cf = new CurveFitter(arrPreE, arrPreA);
-			cf.doFit(CurveFitter.STRAIGHT_LINE);
-			a0[i] = (float) cf.getParams()[0];
-			b0[i] = pixelsSlopePre[i] = (float) cf.getParams()[1];
-			for (int j = 0; j < arrPreA.length; j++) {
-				arrPreA[j] = arrPreA[j] - cf.getParams()[0] - cf.getParams()[1] * arrPreE[j];
+			pixelsMeanPre[i] = (float) Arrays.stream(arrPreA).average().getAsDouble();
+			if (zeroSlope) {
+				a0[i] = pixelsMeanPre[i];
+				b0[i] = pixelsSlopePre[i] = 0f;
+			} else {
+				cf = new CurveFitter(arrPreE, arrPreA);
+				cf.doFit(CurveFitter.STRAIGHT_LINE);
+				a0[i] = (float) cf.getParams()[0];
+				b0[i] = pixelsSlopePre[i] = (float) cf.getParams()[1];
 			}
-			stdDev = classStdDev.evaluate(arrPreA, 0);
-			pixelsStdDevPre[i] = (float) stdDev;
+			for (int j = 0; j < arrPreA.length; j++) {
+				arrPreA[j] = arrPreA[j] - a0[i] - b0[i] * arrPreE[j];
+			}
+			pixelsStdDevPre[i] = (float) classStdDev.evaluate(arrPreA, 0);
 
 			impSrc.getStack().getVoxels(i % wid, i / wid, indices[2], 1, 1, voxelsPost.length, voxelsPost);
 			for (int j = 0; j < arrPostA.length; j++) {
 				arrPostA[j] = (double) voxelsPost[j];
 			}
-			mean = Arrays.stream(arrPostA).average().getAsDouble();
-			pixelsMeanPost[i] = (float) mean;
+			pixelsMeanPost[i] = (float) Arrays.stream(arrPostA).average().getAsDouble();
 			cf = new CurveFitter(arrPostE, arrPostA);
 			cf.doFit(CurveFitter.STRAIGHT_LINE);
 			a1[i] = (float) cf.getParams()[0];
 			b1[i] = pixelsSlopePost[i] = (float) cf.getParams()[1];
 			for (int j = 0; j < arrPostA.length; j++) {
-				arrPostA[j] = arrPostA[j] - cf.getParams()[0] - cf.getParams()[1] * arrPostE[j];
+				arrPostA[j] = arrPostA[j] - a1[i] - b1[i] * arrPostE[j];
 			}
-			stdDev = classStdDev.evaluate(arrPostA, 0);
-			pixelsStdDevPost[i] = (float) stdDev;
+			pixelsStdDevPost[i] = (float) classStdDev.evaluate(arrPostA, 0);
 
 		}
 		if (wasVisible)
@@ -120,15 +122,12 @@ public class Normalization implements PlugIn {
 			ImagingXAFSResultWindow.create("Pre-edge and post-edge statistics of " + impSrc.getTitle(), 3, 2, impStats);
 		}
 		if (statsImages) {
-			impMeanPre.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeMean.tif");
-			impSlopePre.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeSlope.tif");
-			impStdDevPre
-					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PreEdgeStdDev.tif");
-			impMeanPost.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeMean.tif");
-			impSlopePost
-					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeSlope.tif");
-			impStdDevPost
-					.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_PostEdgeStdDev.tif");
+			impMeanPre.setTitle(baseName + "_PreEdgeMean.tif");
+			impSlopePre.setTitle(baseName + "_PreEdgeSlope.tif");
+			impStdDevPre.setTitle(baseName + "_PreEdgeStdDev.tif");
+			impMeanPost.setTitle(baseName + "_PostEdgeMean.tif");
+			impSlopePost.setTitle(baseName + "_PostEdgeSlope.tif");
+			impStdDevPost.setTitle(baseName + "_PostEdgeStdDev.tif");
 			for (ImagePlus imp : impStats) {
 				imp.setLut(new LUT(LutLoader.getLut("grays"), imp.getDisplayRangeMin(), imp.getDisplayRangeMax()));
 				imp.show();
@@ -137,15 +136,13 @@ public class Normalization implements PlugIn {
 
 		if (wasVisible)
 			IJ.log("Normalizing all pixels...");
-		impNorm = NewImage.createFloatImage(
-				impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_normalized.tif", wid, hei, slc,
-				NewImage.FILL_BLACK);
+		impNorm = NewImage.createFloatImage(baseName + "_normalized.tif", wid, hei, slc, NewImage.FILL_BLACK);
 		ImagingXAFSCommon.setPropEnergies(impNorm, energy);
 		ImagePlus impFilter = NewImage.createByteImage("Filter", wid, hei, 1, NewImage.FILL_BLACK);
 		byte[] pixelsFilter = (byte[]) impFilter.getProcessor().getPixels();
-		impE0 = NewImage.createFloatImage("E0", wid, hei, 1, NewImage.FILL_BLACK);
+		impE0 = NewImage.createFloatImage(baseName + "_E0.tif", wid, hei, 1, NewImage.FILL_BLACK);
 		float[] pixelsE0 = (float[]) impE0.getProcessor().getPixels();
-		impDmut = NewImage.createFloatImage("Dmut", wid, hei, 1, NewImage.FILL_BLACK);
+		impDmut = NewImage.createFloatImage(baseName + "_Dmut.tif", wid, hei, 1, NewImage.FILL_BLACK);
 		float[] pixelsDmut = (float[]) impDmut.getProcessor().getPixels();
 		float[] voxels = new float[impSrc.getNSlices()];
 		float e0_up, e0_down, e0;
@@ -188,9 +185,6 @@ public class Normalization implements PlugIn {
 			Collections.addAll(imps, impFilter, impE0, impDmut);
 			ImagingXAFSResultWindow.create("Normalization summary of " + impSrc.getTitle(), 3, 1, imps);
 		}
-
-		impE0.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_E0.tif");
-		impDmut.setTitle(impSrc.getTitle().replace("_corrected", "").replace(".tif", "") + "_Dmut.tif");
 		FileInfo fi = impSrc.getOriginalFileInfo();
 		if (saveResults && fi != null) {
 			if (statsImages) {
