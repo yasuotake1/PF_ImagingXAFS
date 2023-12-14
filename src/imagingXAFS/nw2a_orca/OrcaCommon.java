@@ -7,8 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import ij.IJ;
@@ -16,6 +16,7 @@ import ij.ImagePlus;
 import ij.Prefs;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
 import ij.plugin.Raw;
 
@@ -30,9 +31,15 @@ public class OrcaCommon implements PlugIn {
 
 	public static String PropPath = "plugins/PF_ImagingXAFS/OrcaProps.config";
 	public static final String[] arrBinning = { "1", "2", "4", "8" };
-	static String strBinning = arrBinning[0];
-	static int ofsInt = 100;
+	static String strImg = "";
+	static String strRef = "";
+	static String strDark = "100";
+	static int modeDark = 0;// 0: No dark subtraction, 1: Dark subtraction by constDark, 2: Dark subtraction
+							// by impDark
+	private static ImagePlus impDark;
+	private static int constDark = 0;
 	static double ofsEne = 0.0;
+	static String strBinning = arrBinning[0];
 
 	public void run(String arg) {
 	}
@@ -42,7 +49,7 @@ public class OrcaCommon implements PlugIn {
 	 * 
 	 * @return OrcaProps object contains parameters.
 	 */
-	public static OrcaProps ReadProps() {
+	public static OrcaProps readProps() {
 		Properties prop = new Properties();
 
 		InputStream is;
@@ -78,7 +85,7 @@ public class OrcaCommon implements PlugIn {
 	 * 
 	 * @param target OrcaProps object that contains parameters to be written.
 	 */
-	public static void WriteProps(OrcaProps target) {
+	public static void writeProps(OrcaProps target) {
 		Properties prop = new Properties();
 
 		prop.setProperty("dcmDirection", String.valueOf(target.dcmDirection));
@@ -99,20 +106,26 @@ public class OrcaCommon implements PlugIn {
 
 	/**
 	 * Reads single ITEX file. Image width, heights, data offset, and bitdepth are
-	 * read from heading 64 bytes.
+	 * read from heading 64 bytes. It subtracts constant or dark image set by
+	 * modeDark if subtactDark=true. Call setDark(String, OrcaProps) to specify the
+	 * subtraction method prior to calling this method.
 	 * 
-	 * @param path Path specifying the .img file to be read.
-	 * @param prop OrcaProps object that contains loading parameters.
+	 * @param path         Path specifying the .img file to be read.
+	 * @param prop         OrcaProps object that contains loading parameters.
+	 * @param subtractDark
 	 * @return ImagePlus 2D image.
 	 */
-	public static ImagePlus LoadOrca(Path path, OrcaProps prop) {
+	public static ImagePlus loadOrca(String path, OrcaProps prop, boolean subtractDark) {
+		Path p = Paths.get(path);
 		FileInfo fi = new FileInfo();
 		fi.intelByteOrder = true;
 		try {
-			if (!Files.exists(path)) {
+			if (!ImagingXAFSCommon.isExistingPath(path)) {
 				return null;
 			}
-			byte[] buffer = readBytes(path.toString(), 0, 64);
+			if (prop == null)
+				prop = new OrcaProps();
+			byte[] buffer = readBytes(path, 0, 64);
 			fi.width = prop.width = (buffer[4] & 0xff) + ((buffer[5] & 0xff) << 8);
 			fi.height = prop.height = (buffer[6] & 0xff) + ((buffer[7] & 0xff) << 8);
 			fi.longOffset = (long) ((buffer[2] & 0xff) + ((buffer[3] & 0xff) << 8) + 64);
@@ -134,9 +147,22 @@ public class OrcaCommon implements PlugIn {
 			IJ.error("Failed to load an ORCA image.");
 			return null;
 		}
-		ImagePlus imp = Raw.open(path.toString(), fi);
-		fi.directory = IJ.addSeparator(path.getParent().toString());
-		fi.fileName = path.getFileName().toString();
+		ImagePlus imp = Raw.open(path, fi);
+		if (subtractDark) {
+			switch (modeDark) {
+			case 1:
+				imp.getProcessor().add(-constDark);
+				break;
+			case 2:
+				if (impDark != null && imp.getWidth() == impDark.getWidth() && imp.getHeight() == impDark.getHeight())
+					ImageCalculator.run(imp, impDark, "subtract");
+				break;
+			default:
+				break;
+			}
+		}
+		fi.directory = IJ.addSeparator(p.getParent().toString());
+		fi.fileName = p.getFileName().toString();
 		imp.setFileInfo(fi);
 		return imp;
 	}
@@ -161,6 +187,53 @@ public class OrcaCommon implements PlugIn {
 		} catch (IOException ex) {
 			throw ex;
 		}
+	}
+
+	/**
+	 * Sets the subtraction method in LoadOrca(String, OrcaProps, boolean). Constant
+	 * dark subtraction is set when strDark could be parsed to an integer. If
+	 * strDark specifies a path to dark image, it searches for up-to-ten dark files
+	 * (*_dk[0-9].img), load, average, and stores in impDark. It returns modeDark,
+	 * that is, 0: No dark subtraction, 1: Dark subtraction by constDark, 2: Dark
+	 * subtraction by impDark.
+	 * 
+	 * @param _strDark
+	 * @return
+	 */
+	public static int setDark(String _strDark) {
+		impDark = null;
+		constDark = 0;
+		modeDark = 0;
+		if (isInteger(_strDark)) {
+			constDark = Integer.parseInt(_strDark);
+			impDark = null;
+			modeDark = constDark == 0 ? 0 : 1;
+		} else if (ImagingXAFSCommon.isExistingPath(_strDark)) {
+			if (_strDark.matches(".*_dk[0-9].img")) {
+				String strDarkTry;
+				int cnt = 0;
+				ImagePlus imp;
+				for (int i = 0; i < 10; i++) {
+					strDarkTry = _strDark.substring(0, _strDark.length() - 8) + "_dk" + i + ".img";
+					imp = loadOrca(strDarkTry, null, false);
+					if (imp != null) {
+						if (i == 0) {
+							impDark = imp;
+						} else {
+							ImageCalculator.run(impDark, imp, "add");
+							cnt++;
+						}
+					}
+				}
+				impDark.getProcessor().multiply(1d / cnt);
+			} else {
+				impDark = loadOrca(_strDark, null, false);
+			}
+			constDark = 0;
+			modeDark = 2;
+		}
+		strDark = _strDark;
+		return modeDark;
 	}
 
 	/**
@@ -228,5 +301,22 @@ public class OrcaCommon implements PlugIn {
 		prop.pixelSize = sourceProp.pixelSize;
 		prop.width = sourceProp.width;
 		return prop;
+	}
+
+	/**
+	 * Returns number of pixels in one direction to be binned.
+	 * 
+	 * @return
+	 */
+	public static int getIntBinning() {
+		try {
+			return Integer.parseInt(strBinning);
+		} catch (NumberFormatException e) {
+			return 1;
+		}
+	}
+
+	public static boolean isInteger(String value) {
+		return value != null && !value.isEmpty() && value.matches("[0-9]+");
 	}
 }

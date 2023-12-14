@@ -1,15 +1,12 @@
 package imagingXAFS.nw2a_ultra;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
 import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
+import imagingXAFS.common.ImagingXAFSCommon;
 
 public class Load_SingleUltra implements PlugIn {
 
@@ -26,10 +23,8 @@ public class Load_SingleUltra implements PlugIn {
 			return;
 
 		String strImgPath = gd.getNextString();
-		Path pathImg = Paths.get(strImgPath);
 		String strRefPath = gd.getNextString();
-		Path pathRef = Paths.get(strRefPath);
-		if (strImgPath.isEmpty() || !Files.exists(pathImg))
+		if (ImagingXAFSCommon.isExistingPath(strImgPath))
 			return;
 		String strBinning = gd.getNextChoice();
 
@@ -37,7 +32,7 @@ public class Load_SingleUltra implements PlugIn {
 		if (impImg == null)
 			return;
 		ImagePlus impRef;
-		if (!strRefPath.isEmpty() && Files.exists(pathRef)) {
+		if (ImagingXAFSCommon.isExistingPath(strRefPath)) {
 			impRef = XRM_Reader.Load(strRefPath, true);
 			if (impRef == null)
 				return;

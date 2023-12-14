@@ -1,6 +1,8 @@
 package imagingXAFS.bl15a1;
 
+import java.io.File;
 import java.util.Arrays;
+
 import ij.*;
 import ij.plugin.*;
 import ij.io.OpenDialog;
@@ -10,9 +12,6 @@ import ij.io.FileSaver;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import imagingXAFS.common.ImagingXAFSCommon;
-
-import java.io.File;
-import java.nio.file.Paths;
 
 public class LoadXANESMap implements PlugIn {
 	String dirImg = "";
@@ -99,10 +98,9 @@ public class LoadXANESMap implements PlugIn {
 				if (Double.isNaN(scale[0]) && Double.isNaN(scale[1]) && Double.isNaN(scale[2])
 						&& Double.isNaN(scale[3]))
 					scale = BL15A1Common.getScanInfo(dirImg, prefix + "_qscan_001", prop);
-				energies = ImagingXAFSCommon.readEnergies(Paths.get(dirImg + prefix));
+				energies = ImagingXAFSCommon.readEnergies(dirImg + prefix);
 				if (energies == null) {
-					energies = ImagingXAFSCommon
-							.readEnergies(Paths.get(dirImg + prefix.substring(0, prefix.length() - 4)));
+					energies = ImagingXAFSCommon.readEnergies(dirImg + prefix.substring(0, prefix.length() - 4));
 				}
 				ImageStack stack = new ImageStack();
 				TextReader tr = new TextReader();

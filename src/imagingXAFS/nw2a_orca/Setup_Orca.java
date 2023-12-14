@@ -6,7 +6,7 @@ import ij.plugin.PlugIn;
 public class Setup_Orca implements PlugIn {
 
 	public void run(String arg) {
-		OrcaProps readProps = OrcaCommon.ReadProps();
+		OrcaProps readProps = OrcaCommon.readProps();
 
 		String[] choiceDirections = { "Down", "Up" };
 		String[] choiceBitDepth = { " 8", "16", "32", "64" };
@@ -45,7 +45,7 @@ public class Setup_Orca implements PlugIn {
 			break;
 		}
 
-		OrcaCommon.WriteProps(target);
+		OrcaCommon.writeProps(target);
 	}
 	
 }

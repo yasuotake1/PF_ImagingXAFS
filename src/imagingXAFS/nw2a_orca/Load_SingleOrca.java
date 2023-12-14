@@ -1,71 +1,74 @@
 package imagingXAFS.nw2a_orca;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import ij.process.ImageConverter;
 import ij.plugin.ImageCalculator;
+import imagingXAFS.common.ImagingXAFSCommon;
 
 public class Load_SingleOrca implements PlugIn {
 
 	public static ImagePlus impTgt;
+	private static final String msg = "Note:\n"
+			+ "Select an image file for Reference file field to calculate absorbance, or enter an integer value to use constant I0."
+			+ "\nSelect an image file for Dark file field to subtract dark image, or enter an integer value to subtract constant."
+			+ "\nMultiple dark images (*_dk[0-9].img) are searched for automatically.";
 
 	public void run(String arg) {
-		OrcaProps prop = OrcaCommon.ReadProps();
-
 		GenericDialog gd = new GenericDialog("Load single ORCA-Flash image");
-		gd.addFileField("Image file", "");
-		gd.addFileField("Reference image file (if exists)", "");
-		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
+		gd.addFileField("Transmission image", OrcaCommon.strImg);
+		gd.addFileField("Reference image or constant", OrcaCommon.strRef);
+		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
+		gd.addMessage(msg);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
-		String strImgPath = gd.getNextString();
-		Path pathImg = Paths.get(strImgPath);
-		String strRefPath = gd.getNextString();
-		Path pathRef = Paths.get(strRefPath);
-		if (strImgPath.isEmpty() || !Files.exists(pathImg))
+		String strImg = gd.getNextString();
+		String strRef = gd.getNextString();
+		String strDark = gd.getNextString();
+		if (!ImagingXAFSCommon.isExistingPath(strImg))
 			return;
-		int _ofsInt = (int) gd.getNextNumber();
-		String _strBinning = gd.getNextChoice();
 
-		ImagePlus impImg = OrcaCommon.LoadOrca(pathImg, prop);
+		OrcaCommon.strImg = strImg;
+		OrcaCommon.strRef = strRef;
+		OrcaCommon.setDark(strDark);
+		OrcaCommon.strBinning = gd.getNextChoice();
+
+		OrcaProps prop = OrcaCommon.readProps();
+		ImagePlus impImg = OrcaCommon.loadOrca(strImg, prop, true);
 		if (impImg == null)
 			return;
-		if (_ofsInt != 0)
-			impImg.getProcessor().add(-_ofsInt);
 		ImagePlus impRef;
-		if (!strRefPath.isEmpty() && Files.exists(pathRef)) {
-			impRef = OrcaCommon.LoadOrca(pathRef, prop);
+		if (ImagingXAFSCommon.isExistingPath(strRef)) {
+			impRef = OrcaCommon.loadOrca(strRef, prop, true);
 			if (impRef == null)
 				return;
-			if (_ofsInt != 0)
-				impRef.getProcessor().add(-_ofsInt);
 			impTgt = ImageCalculator.run(impRef, impImg, "divide create 32-bit");
 			impTgt.setTitle(impImg.getTitle().replace(".img", ""));
 			impTgt.getProcessor().log();
 		} else {
 			impTgt = impImg;
-		}
-		int intBin = 1;
-		if (_strBinning != OrcaCommon.arrBinning[0]) {
-			try {
-				intBin = Integer.parseInt(_strBinning);
-				impTgt = impTgt.resize(prop.width / intBin, prop.height / intBin, "average");
-			} catch (NumberFormatException e) {
+			if (OrcaCommon.isInteger(strRef)) {
+				double constRef = Integer.parseInt(strRef);
+				ImageConverter iConv = new ImageConverter(impTgt);
+				iConv.convertToGray32();
+				float[] arrFloat = (float[]) impTgt.getProcessor().getPixels();
+				for (int k = 0; k < arrFloat.length; k++) {
+					arrFloat[k] = (float) Math.log(constRef / arrFloat[k]);
+				}
 			}
+		}
+		int intBin = OrcaCommon.getIntBinning();
+		if (intBin > 1) {
+			impTgt = impTgt.resize(prop.width / intBin, prop.height / intBin, "average");
 		}
 		impTgt.setFileInfo(impImg.getOriginalFileInfo());
 		OrcaCommon.setCalibration(impTgt, prop, intBin);
-		OrcaCommon.WriteProps(prop);
-		OrcaCommon.ofsInt = _ofsInt;
-		OrcaCommon.strBinning = _strBinning;
+		OrcaCommon.writeProps(prop);
 		impTgt.show();
 		IJ.run(impTgt, "Enhance Contrast...", "saturated=0.1");
 		impTgt.updateAndDraw();

@@ -17,14 +17,15 @@ import imagingXAFS.common.*;
 public class Diag_EnergyCorrParam implements PlugIn {
 
 	public void run(String arg) {
-		OrcaProps readProps = OrcaCommon.ReadProps();
+		OrcaProps readProps = OrcaCommon.readProps();
 
 		GenericDialog gd = new GenericDialog("Energy Correction Diagnostics");
 		gd.addMessage("Data source:");
-		gd.addFileField("Image data file (9809 format)", "");
-		gd.addFileField("Reference data file (9809 format, if exists)", "");
-		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
-		gd.addCheckbox("I0 normalization", Load_OrcaStack.getNorm());
+		gd.addFileField("Transmission images (9809 format)", OrcaCommon.strImg);
+		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
+		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
+		gd.addMessage("");
+		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
 		gd.addMessage("Normalization:");
 		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
@@ -43,10 +44,15 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		if (gd.wasCanceled())
 			return;
 
-		String strImg9809Path = gd.getNextString();
-		String strRef9809Path = gd.getNextString();
-		int _ofsInt = (int) gd.getNextNumber();
-		boolean norm = gd.getNextBoolean();
+		String strImg9809 = gd.getNextString();
+		String strRef9809 = gd.getNextString();
+		String strDark = gd.getNextString();
+		if (!ImagingXAFSCommon.isExistingPath(strImg9809))
+			return;
+		OrcaCommon.setDark(strDark);
+		OrcaCommon.strBinning = OrcaCommon.arrBinning[0];
+		OrcaCommon.ofsEne = 0d;
+		boolean i0Corr = gd.getNextBoolean();
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
 		double postStart = gd.getNextNumber();
@@ -65,8 +71,8 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		for (int i = 0; i < num; i++) {
 			arrPosition[i] = step * i + from;
 		}
-		Load_OrcaStack.setOptions(_ofsInt, 0.0d, "1", norm, false, false);
-		Load_OrcaStack.Load(strImg9809Path, strRef9809Path);
+		Load_OrcaStack.setOptions(i0Corr, false, false);
+		Load_OrcaStack.load(strImg9809, strRef9809);
 		ImagePlus impSrc = Load_OrcaStack.impStack;
 		IJ.setTool("rect");
 		new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.").show();
@@ -76,6 +82,8 @@ public class Diag_EnergyCorrParam implements PlugIn {
 			impSrc.close();
 			return;
 		}
+
+		OrcaProps prop = OrcaCommon.getDuplicatedProp(readProps);
 		ImagePlus impCrop = impSrc.crop("stack");
 		impCrop.setFileInfo(impSrc.getOriginalFileInfo());
 		ImagingXAFSCommon.setPropEnergies(impCrop, ImagingXAFSCommon.getPropEnergies(impSrc));
@@ -83,7 +91,6 @@ public class Diag_EnergyCorrParam implements PlugIn {
 		ImageStack stack = new ImageStack();
 		ImagingXAFSCommon.normalizationParam = new double[] { preStart, preEnd, postStart, postEnd };
 		ImagingXAFSCommon.e0Jump = e0Jump;
-		OrcaProps prop = OrcaCommon.getDuplicatedProp(readProps);
 		int wid = impCrop.getDimensions()[0];
 		float[] data1 = new float[wid];
 		int hei = impCrop.getDimensions()[1];
@@ -98,7 +105,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 			IJ.showStatus("Calculating detectorPosition=" + String.format("%.1f", arrPosition[i]));
 			IJ.showProgress(i, num);
 			prop.detectorPosition = arrPosition[i];
-			OrcaCommon.WriteProps(prop);
+			OrcaCommon.writeProps(prop);
 			impCorr = Load_OrcaStack.GetCorrectedStack(impCrop, false);
 			Normalization.Normalize(impCorr, threshold, false, false, false, false);
 			impE0 = Normalization.impE0;
@@ -112,7 +119,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 			cf.doFit(CurveFitter.STRAIGHT_LINE);
 			arrE0Slope[i] = cf.getParams()[1];
 		}
-		OrcaCommon.WriteProps(readProps);
+		OrcaCommon.writeProps(readProps);
 		ImagePlus impResultStack = new ImagePlus("Result stack", stack);
 		impResultStack.show();
 		Plot plot = new Plot("Result graph", "Detector position (mm)", "Vertical E0 Slope (eV/um)");

@@ -49,7 +49,9 @@ public class Load_DmutE0Map implements PlugIn {
 		ImagePlus impDmut;
 		ImagePlus impE0;
 
-		int idx = Integer.parseInt(pathSrc.substring(pathSrc.lastIndexOf("_map") - 3, pathSrc.lastIndexOf("_map")));
+		int idx = isSeq
+				? Integer.parseInt(pathSrc.substring(pathSrc.lastIndexOf("_map") - 3, pathSrc.lastIndexOf("_map")))
+				: 0;
 		int rep = 0;
 
 		do {
@@ -116,7 +118,7 @@ public class Load_DmutE0Map implements PlugIn {
 			rep++;
 			pathSrc = pathSrc.substring(0, pathSrc.lastIndexOf("_map") - 3) + String.format("%03d", idx)
 					+ pathSrc.substring(pathSrc.lastIndexOf("_map"));
-		} while (isSeq && Files.exists(Paths.get(pathSrc)));
+		} while (isSeq && ImagingXAFSCommon.isExistingPath(pathSrc));
 
 		if (isSeq)
 			IJ.showStatus("Finished " + rep + " files.");

@@ -2,8 +2,6 @@ package imagingXAFS.nw2a_orca;
 
 import imagingXAFS.common.*;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import ij.IJ;
@@ -14,177 +12,195 @@ import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
+import ij.process.ImageConverter;
 
 public class Load_OrcaStack implements PlugIn {
 
 	public static ImagePlus impStack;
-	static boolean norm = true;
-	static boolean corr = true;
+	static boolean i0Corr = true;
+	static boolean eneCorr = true;
 	static boolean autoSave = true;
+	private static final String msg = "Note:\n"
+			+ "Select a 9809 file for Reference file field to calculate absorbance, or enter an integer value to use constant I0."
+			+ "\nSelect an image file for Dark file field to subtract dark image, or enter an integer value to subtract constant."
+			+ "\nMultiple dark images (*_dk[0-9].img) are searched for automatically.";
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
-		gd.addFileField("Image data file (9809 format)", "");
-		gd.addFileField("Reference data file (9809 format, if exists)", "");
-		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
-		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addFileField("Transmission images (9809 format)", OrcaCommon.strImg);
+		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
+		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
-		gd.addCheckbox("I0 normalization", norm);
-		gd.addCheckbox("Energy correction", corr);
-		gd.addCheckbox("Save automatically", autoSave);
+		gd.addMessage(msg);
+		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addCheckbox("I0 correction", i0Corr);
+		gd.addCheckbox("Energy correction", eneCorr);
+		gd.addCheckbox("Save stack files", autoSave);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
-		String strImg9809Path = gd.getNextString();
-		String strRef9809Path = gd.getNextString();
-		int ofsInt = (int) gd.getNextNumber();
-		double ofsEne = gd.getNextNumber();
-		String strBinning = gd.getNextChoice();
-		norm = gd.getNextBoolean();
-		corr = gd.getNextBoolean();
+		String strImg9809 = gd.getNextString();
+		String strRef9809 = gd.getNextString();
+		String strDark = gd.getNextString();
+		if (!ImagingXAFSCommon.isExistingPath(strImg9809))
+			return;
+		OrcaCommon.strImg = strImg9809;
+		OrcaCommon.strRef = strRef9809;
+		OrcaCommon.setDark(strDark);
+		OrcaCommon.strBinning = gd.getNextChoice();
+		OrcaCommon.ofsEne = gd.getNextNumber();
+		i0Corr = gd.getNextBoolean();
+		eneCorr = gd.getNextBoolean();
 		autoSave = gd.getNextBoolean();
-		setOptions(ofsInt, ofsEne, strBinning, norm, corr, autoSave);
-		Load(strImg9809Path, strRef9809Path);
+		load(strImg9809, strRef9809);
 	}
 
-	public static void Load(String strImg9809Path, String strRef9809Path) {
-		Path pathImg9809 = Paths.get(strImg9809Path);
-		Path pathRef9809 = Paths.get(strRef9809Path);
-		if (strImg9809Path.isEmpty() || !Files.exists(pathImg9809))
+	public static void load(String strImg9809Path, String strRef9809Path) {
+		if (!ImagingXAFSCommon.isExistingPath(strImg9809Path))
 			return;
-		double[] energies = ImagingXAFSCommon.readEnergies(pathImg9809);
+		double[] energies = ImagingXAFSCommon.readEnergies(strImg9809Path);
 		if (OrcaCommon.ofsEne <= -0.01 || OrcaCommon.ofsEne >= 0.01) {
 			for (int i = 0; i < energies.length; i++) {
 				energies[i] += OrcaCommon.ofsEne;
 			}
 		}
-		double[] intImg = ImagingXAFSCommon.readIntensities(pathImg9809);
-		double[] intRef = pathRef9809 != null ? ImagingXAFSCommon.readIntensities(pathRef9809) : null;
-		OrcaProps prop = OrcaCommon.ReadProps();
+		double[] intImg = ImagingXAFSCommon.readIntensities(strImg9809Path);
+		double[] intRef = new double[intImg.length];
 
 		int i = 0;
 		int j = 0;
 		boolean multi = false;
-		Path pathImg = Paths.get(strImg9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img"));
-		if (!Files.exists(pathImg)) {
-			pathImg = Paths.get(strImg9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img"));
-			if (!Files.exists(pathImg))
+		String strImg = strImg9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img");
+		if (!ImagingXAFSCommon.isExistingPath(strImg)) {
+			strImg = strImg9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img");
+			if (!ImagingXAFSCommon.isExistingPath(strImg))
 				return;
 			multi = true;
 		}
 
 		boolean multiRef = false;
-		Path pathRef = null;
-		if (!strRef9809Path.isEmpty() && Files.exists(pathRef9809)) {
-			pathRef = Paths.get(strRef9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img"));
-			if (!Files.exists(pathRef)) {
-				pathRef = Paths.get(strRef9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img"));
-				if (Files.exists(pathRef))
+		String strRef = null;
+		if (ImagingXAFSCommon.isExistingPath(strRef9809Path)) {
+			intRef = ImagingXAFSCommon.readIntensities(strRef9809Path);
+			strRef = strRef9809Path + (intImg.length > 999 ? "_0000.img" : "_000.img");
+			if (!ImagingXAFSCommon.isExistingPath(strRef)) {
+				strRef = strRef9809Path + (intImg.length > 999 ? "_0000_000.img" : "_000_000.img");
+				if (ImagingXAFSCommon.isExistingPath(strRef))
 					multiRef = true;
 			}
 		}
+		boolean constRef = OrcaCommon.isInteger(strRef9809Path);
+		double constRefValue = constRef ? Integer.parseInt(strRef9809Path) : 0.0;
+
+		OrcaProps prop = OrcaCommon.readProps();
 		ImageStack stack = null;
 		FileInfo fi = null;
 		ImagePlus impImg, impRef, impTgt;
-		ImageCalculator ic = new ImageCalculator();
-		short[] pixels;
-		int[] arr;
-		while (Files.exists(pathImg)) {
+		ImageCalculator iCal = new ImageCalculator();
+		ImageConverter iConv;
+		short[] arrShort;
+		int[] arrInt;
+		float[] arrFloat;
+		while (ImagingXAFSCommon.isExistingPath(strImg)) {
 			IJ.showStatus("Loading image " + String.format(intImg.length > 999 ? "%04d" : "%03d", i));
 			IJ.showProgress(i, energies.length);
-			impImg = OrcaCommon.LoadOrca(pathImg, prop);
+			impImg = OrcaCommon.loadOrca(strImg, prop, true);
 			if (multi) {
 				j = 0;
-				arr = new int[((short[]) impImg.getProcessor().getPixels()).length];
+				arrInt = new int[((short[]) impImg.getProcessor().getPixels()).length];
 				do {
-					impImg = OrcaCommon.LoadOrca(pathImg, prop);
-					pixels = (short[]) impImg.getProcessor().getPixels();
-					for (int k = 0; k < arr.length; k++) {
-						arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
+					impImg = OrcaCommon.loadOrca(strImg, prop, true);
+					arrShort = (short[]) impImg.getProcessor().getPixels();
+					for (int k = 0; k < arrInt.length; k++) {
+						arrInt[k] += arrShort[k] < 0 ? 65536 + arrShort[k] : arrShort[k];
 					}
 					j++;
-					pathImg = Paths
-							.get(strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
-									+ "_" + String.format("%03d", j) + ".img");
-				} while (Files.exists(pathImg));
-				for (int k = 0; k < arr.length; k++) {
-					arr[k] /= j;
-					pixels[k] = (short) (arr[k] > 32767 ? arr[k] - 65536 : arr[k]);
+					strImg = strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i) + "_"
+							+ String.format("%03d", j) + ".img";
+				} while (ImagingXAFSCommon.isExistingPath(strImg));
+				for (int k = 0; k < arrInt.length; k++) {
+					arrInt[k] /= j;
+					arrShort[k] = (short) (arrInt[k] > 32767 ? arrInt[k] - 65536 : arrInt[k]);
 				}
 				impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
 			}
 			if (impImg == null)
 				break;
-			if (OrcaCommon.ofsInt != 0)
-				impImg.getProcessor().add(-OrcaCommon.ofsInt);
 			if (i == 0) {
 				stack = new ImageStack(impImg.getWidth(), impImg.getHeight());
 				fi = impImg.getOriginalFileInfo();
 			}
 
-			if (pathRef != null && Files.exists(pathRef)) {
-				impRef = OrcaCommon.LoadOrca(pathRef, prop);
+			if (ImagingXAFSCommon.isExistingPath(strRef)) {
+				impRef = OrcaCommon.loadOrca(strRef, prop, true);
 				if (multiRef) {
 					j = 0;
-					arr = new int[((short[]) impRef.getProcessor().getPixels()).length];
+					arrInt = new int[((short[]) impRef.getProcessor().getPixels()).length];
 					do {
-						impRef = OrcaCommon.LoadOrca(pathRef, prop);
-						pixels = (short[]) impRef.getProcessor().getPixels();
-						for (int k = 0; k < arr.length; k++) {
-							arr[k] += pixels[k] < 0 ? 65536 + pixels[k] : pixels[k];
+						impRef = OrcaCommon.loadOrca(strRef, prop, true);
+						arrShort = (short[]) impRef.getProcessor().getPixels();
+						for (int k = 0; k < arrInt.length; k++) {
+							arrInt[k] += arrShort[k] < 0 ? 65536 + arrShort[k] : arrShort[k];
 						}
 						j++;
-						pathRef = Paths
-								.get(strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
-										+ "_" + String.format("%03d", j) + ".img");
-					} while (Files.exists(pathRef));
-					for (int k = 0; k < arr.length; k++) {
-						arr[k] /= j;
-						pixels[k] = (short) (arr[k] > 32767 ? arr[k] - 65536 : arr[k]);
+						strRef = strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i)
+								+ "_" + String.format("%03d", j) + ".img";
+					} while (ImagingXAFSCommon.isExistingPath(strRef));
+					for (int k = 0; k < arrInt.length; k++) {
+						arrInt[k] /= j;
+						arrShort[k] = (short) (arrInt[k] > 32767 ? arrInt[k] - 65536 : arrInt[k]);
 					}
 					impImg.setTitle(impImg.getTitle().substring(0, impImg.getTitle().length() - 9));
 				}
-				if (OrcaCommon.ofsInt != 0)
-					impRef.getProcessor().add(-OrcaCommon.ofsInt);
-				impTgt = ic.run("divide create 32-bit", impRef, impImg);
+				impTgt = iCal.run("divide create 32-bit", impRef, impImg);
 				impTgt.setTitle(
 						impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i]) + " eV)");
 				impTgt.getProcessor().log();
-				if (norm) {
+				if (i0Corr) {
 					impTgt.getProcessor().add(Math.log(intImg[i] / intRef[i]));
 				}
-				pathRef = Paths.get(strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
-						+ (multiRef ? "_000.img" : ".img"));
+				strRef = strRef9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+						+ (multiRef ? "_000.img" : ".img");
+			} else if (constRef) {
+				impTgt = impImg;
+				iConv = new ImageConverter(impTgt);
+				iConv.convertToGray32();
+				arrFloat = (float[]) impTgt.getProcessor().getPixels();
+				for (int k = 0; k < arrFloat.length; k++) {
+					arrFloat[k] = (float) Math.log(constRefValue / arrFloat[k]);
+				}
+				if (i0Corr) {
+					impTgt.getProcessor().add(Math.log(intImg[i] / intImg[0]));
+				}
+				impTgt.setTitle(
+						impImg.getTitle().replace(".img", "") + " (" + String.format("%.2f", energies[i]) + " eV)");
 			} else {
 				impTgt = impImg;
-				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
-				if (norm) {
+				if (i0Corr) {
 					impTgt.getProcessor().multiply(intImg[0] / intImg[i]);
 				}
+				impTgt.setTitle(impImg.getTitle() + "(" + String.format("%.2f", energies[i]) + " eV)");
 			}
-			pathImg = Paths.get(strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
-					+ (multi ? "_000.img" : ".img"));
 			stack.addSlice(impTgt.getTitle(), impTgt.getProcessor());
-
+			strImg = strImg9809Path + "_" + String.format(intImg.length > 999 ? "%04d" : "%03d", i + 1)
+					+ (multi ? "_000.img" : ".img");
 			i++;
 		}
-		OpenDialog.setDefaultDirectory(pathImg.getParent().toString());
-		impStack = new ImagePlus(pathImg9809.getFileName().toString(), stack);
-		int intBin = 1;
-		if (OrcaCommon.strBinning != OrcaCommon.arrBinning[0]) {
-			try {
-				intBin = Integer.parseInt(OrcaCommon.strBinning);
-				impStack = impStack.resize(prop.width / intBin, prop.height / intBin, "average");
-			} catch (NumberFormatException e) {
-			}
+		OpenDialog.setDefaultDirectory(Paths.get(strImg).getParent().toString());
+
+		int intBin = OrcaCommon.getIntBinning();
+		if (intBin > 1) {
+			impStack = impStack.resize(prop.width / intBin, prop.height / intBin, "average");
+			impStack.setTitle(Paths.get(strImg9809Path).getFileName().toString());
+		} else {
+			impStack = new ImagePlus(Paths.get(strImg9809Path).getFileName().toString(), stack);
 		}
-		impStack.setTitle(pathImg9809.getFileName().toString());
 		ImagingXAFSCommon.setPropEnergies(impStack, energies);
 		OrcaCommon.setCalibration(impStack, prop, intBin);
-		OrcaCommon.WriteProps(prop);
+		OrcaCommon.writeProps(prop);
 		impStack.changes = false;
-		if (corr) {
+		if (eneCorr) {
 			impStack = GetCorrectedStack(impStack, true);
 		}
 		fi.fileName = impStack.getTitle();
@@ -198,20 +214,33 @@ public class Load_OrcaStack implements PlugIn {
 		IJ.setTool("multipoint");
 	}
 
-	public static void setOptions(int _ofsInt, double _ofsEne, String _strBinning, boolean _norm, boolean _corr,
-			boolean _autoSave) {
-		OrcaCommon.ofsInt = _ofsInt;
-		OrcaCommon.ofsEne = _ofsEne;
-		OrcaCommon.strBinning = _strBinning;
-		norm = _norm;
-		corr = _corr;
+	/**
+	 * Sets private variables for loading an ORCA imagestack.
+	 * 
+	 * @param _i0Corr   If true, it performs intensity correction of each images by
+	 *                  I0 ion chamber intensity.
+	 * @param _eneCorr  If true, it performs photon energy correction in vertical
+	 *                  direction.
+	 * @param _autoSave If true, it saves the loaded stack as TIFF.
+	 */
+	public static void setOptions(boolean _i0Corr, boolean _eneCorr, boolean _autoSave) {
+		i0Corr = _i0Corr;
+		eneCorr = _eneCorr;
 		autoSave = _autoSave;
 	}
 
-	public static boolean getNorm() {
-		return norm;
+	public static boolean getI0Corr() {
+		return i0Corr;
 	}
 
+	/**
+	 * Performs photon energy correction in vertical direction, based on M. Katayama
+	 * et al. (https://doi.org/10.1107/S0909049512028282).
+	 * 
+	 * @param impSrc
+	 * @param showStatus
+	 * @return Energy-corrected version of impSrc.
+	 */
 	public static ImagePlus GetCorrectedStack(ImagePlus impSrc, boolean showStatus) {
 		int[] Dimensions = impSrc.getDimensions();
 		int nSlices = Dimensions[3];
@@ -221,7 +250,7 @@ public class Load_OrcaStack implements PlugIn {
 			return impSrc;
 
 		double[] correctedEnergies = new double[nSlices];
-		OrcaProps prop = OrcaCommon.ReadProps();
+		OrcaProps prop = OrcaCommon.readProps();
 		ImagePlus impTgt = impSrc.duplicate();
 		impTgt.setFileInfo(impSrc.getOriginalFileInfo());
 		double correctedIdx;
@@ -231,8 +260,7 @@ public class Load_OrcaStack implements PlugIn {
 		float[] data3 = new float[Dimensions[0]];
 		for (int i = 0; i < Dimensions[1]; i++) {
 			if (showStatus) {
-				IJ.showStatus("Processing energy correction at y = " + i + " in " + impSrc.getTitle()
-						+ "...");
+				IJ.showStatus("Processing energy correction at y = " + i + " in " + impSrc.getTitle() + "...");
 				IJ.showProgress(i, Dimensions[1]);
 			}
 			for (int j = 0; j < nSlices; j++) {

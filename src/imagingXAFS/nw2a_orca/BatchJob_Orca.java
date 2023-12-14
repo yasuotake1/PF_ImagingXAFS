@@ -27,13 +27,13 @@ public class BatchJob_Orca implements PlugIn {
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Batch job: NW2A ImagingXAFS");
-		gd.addMessage("Source:");
-		gd.addFileField("First image data file (9809 format)", "");
-		gd.addFileField("Reference data file (9809 format)", "");
-		gd.addNumericField("Constant dark offset", OrcaCommon.ofsInt);
-		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addMessage("Data source:");
+		gd.addFileField("First transmission images (9809 format)", OrcaCommon.strImg);
+		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
+		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
-		gd.addCheckbox("I0 normalization", true);
+		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
+		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
 		gd.addCheckbox("Save stack files", false);
 		gd.addMessage("Preprocess:");
 		gd.addCheckbox("Apply 3D Gaussian blur", false);
@@ -61,19 +61,19 @@ public class BatchJob_Orca implements PlugIn {
 
 		strImg9809Path = gd.getNextString();
 		strRef9809Path = gd.getNextString();
-		if (strImg9809Path.isEmpty() || !Files.exists(getPathImg9809()) || strRef9809Path.isEmpty()
-				|| !Files.exists(getPathRef9809()))
+		String strDark = gd.getNextString();
+		if (!ImagingXAFSCommon.isExistingPath(strImg9809Path)
+				|| !(ImagingXAFSCommon.isExistingPath(strRef9809Path) || OrcaCommon.isInteger(strRef9809Path)))
 			return;
-		int _ofsInt = (int) gd.getNextNumber();
-		double _ofsEne = gd.getNextNumber();
-		String _strBinning = gd.getNextChoice();
-		boolean i0norm = gd.getNextBoolean();
+		OrcaCommon.strBinning = gd.getNextChoice();
+		OrcaCommon.ofsEne = gd.getNextNumber();
+		boolean i0Corr = gd.getNextBoolean();
 		boolean saveStack = gd.getNextBoolean();
 		boolean filter = gd.getNextBoolean();
-		double[] energy = ImagingXAFSCommon.readEnergies(getPathImg9809());
-		if (_ofsEne <= -0.01 || _ofsEne >= 0.01) {
+		double[] energy = ImagingXAFSCommon.readEnergies(strImg9809Path);
+		if (OrcaCommon.ofsEne <= -0.01 || OrcaCommon.ofsEne >= 0.01) {
 			for (int i = 0; i < energy.length; i++) {
-				energy[i] += _ofsEne;
+				energy[i] += OrcaCommon.ofsEne;
 			}
 		}
 		double preStart = gd.getNextNumber();
@@ -106,8 +106,8 @@ public class BatchJob_Orca implements PlugIn {
 
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
-		String strOption = "image=" + strImgPath + " reference=" + strRefPath;
-		strOption += " constant=" + _ofsInt + " binning=" + _strBinning;
+		String strOption = "transmission=" + strImgPath + " reference=" + strRefPath;
+		strOption += " dark=" + strDark + " binning=" + OrcaCommon.strBinning;
 		IJ.run("Load single ORCA image...", strOption);
 		ImagePlus impRoi = Load_SingleOrca.impTgt;
 		IJ.setTool("rect");
@@ -167,8 +167,8 @@ public class BatchJob_Orca implements PlugIn {
 
 		for (int i = 0; i < rep; i++) {
 			IJ.log("Loading " + getImg9809Name() + "...");
-			Load_OrcaStack.setOptions(_ofsInt, _ofsEne, _strBinning, i0norm, true, saveStack);
-			Load_OrcaStack.Load(strImg9809Path, strRef9809Path);
+			Load_OrcaStack.setOptions(i0Corr, true, saveStack);
+			Load_OrcaStack.load(strImg9809Path, strRef9809Path);
 			impMut = Load_OrcaStack.impStack;
 			baseName = impMut.getTitle().replace("_corrected", "").replace(".tif", "");
 			if (roi == null) {
@@ -276,16 +276,8 @@ public class BatchJob_Orca implements PlugIn {
 		IJ.log("Finished batch job. Elapsed time: " + elapsed + " seconds.");
 	}
 
-	private Path getPathImg9809() {
-		return Paths.get(strImg9809Path);
-	}
-
-	private Path getPathRef9809() {
-		return Paths.get(strRef9809Path);
-	}
-
 	private String getImg9809Name() {
-		return getPathImg9809().getFileName().toString();
+		return Paths.get(strImg9809Path).getFileName().toString();
 	}
 
 	private String getImg9809NameWithoutIdx() {
@@ -297,21 +289,11 @@ public class BatchJob_Orca implements PlugIn {
 	}
 
 	private String getImg9809Dir() {
-		return getPathImg9809().getParent().toString() + "/";
+		return Paths.get(strImg9809Path).getParent().toString() + "/";
 	}
 
 	private String getImg9809Root() {
-		return getPathImg9809().getParent().getParent().toString();
-	}
-
-	private int getImg9809Idx() {
-		try {
-			return Integer.parseInt(getImg9809Name().substring(getImg9809Name().length() - 3));
-		} catch (IndexOutOfBoundsException ex) {
-			return -1;
-		} catch (NumberFormatException ex) {
-			return -1;
-		}
+		return Paths.get(strImg9809Path).getParent().getParent().toString();
 	}
 
 	private void setNextImg9809() {
@@ -320,13 +302,14 @@ public class BatchJob_Orca implements PlugIn {
 	}
 
 	private String getNextName() {
-		int idx = getImg9809Idx();
-		if (idx < 0) {
-			return getImg9809NameWithoutIdx();
-		} else {
+		try {
+			int idx = Integer.parseInt(getImg9809Name().substring(getImg9809Name().length() - 3));
 			return getImg9809NameWithoutIdx() + String.format("%03d", idx + 1);
+		} catch (IndexOutOfBoundsException ex) {
+			return getImg9809NameWithoutIdx();
+		} catch (NumberFormatException ex) {
+			return getImg9809NameWithoutIdx();
 		}
-
 	}
 
 	private int getRepetition() {
@@ -335,7 +318,7 @@ public class BatchJob_Orca implements PlugIn {
 		do {
 			rep++;
 			setNextImg9809();
-		} while (Files.exists(getPathImg9809()));
+		} while (ImagingXAFSCommon.isExistingPath(strImg9809Path));
 		strImg9809Path = tmp;
 		return rep;
 	}

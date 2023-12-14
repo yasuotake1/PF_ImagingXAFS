@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,6 +35,30 @@ import imagingXAFS.nw2a_ultra.*;
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-		
+		GenericDialog gd = new GenericDialog("test");
+		gd.addFileField("Path", "");
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return;
+		String path = gd.getNextString();
+		try {
+			byte[] buffer = OrcaCommon.readBytes(path, 0, 64);
+			int intFileType = (buffer[12] & 0xff) + ((buffer[13] & 0xff) << 8);
+			IJ.log(String.valueOf(intFileType));
+			switch (intFileType) {
+			case 0:
+				IJ.log("8bit");
+				break;
+			case 2:
+				IJ.log("16bit");
+				break;
+			case 3:
+				IJ.log("32bit");
+				break;
+			}
+		} catch (Exception e) {
+
+		}
+
 	}
 }

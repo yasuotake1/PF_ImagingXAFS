@@ -1,7 +1,5 @@
 package imagingXAFS.common;
 
-import java.nio.file.Paths;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -15,7 +13,7 @@ public class Set_Energy implements PlugIn {
 		OpenDialog od = new OpenDialog("Select 9809 format file.");
 		if (od.getPath() == null)
 			return;
-		double[] energy = ImagingXAFSCommon.readEnergies(Paths.get(od.getPath()));
+		double[] energy = ImagingXAFSCommon.readEnergies(od.getPath());
 		if (imp.getNSlices() == energy.length) {
 			ImagingXAFSCommon.setPropEnergies(imp, energy);
 		} else {
