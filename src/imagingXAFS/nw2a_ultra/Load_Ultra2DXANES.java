@@ -1,6 +1,8 @@
 package imagingXAFS.nw2a_ultra;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -42,16 +44,26 @@ public class Load_Ultra2DXANES implements PlugIn {
 			String[] arrImg = si.imageFiles;
 			if (si.nRepeatScan > 1) {
 				String[] listRep = new String[si.nRepeatScan];
-				for (int i = 0; i < listRep.length; i++) {
-					listRep[i] = String.format("%02d", i);
+				Pattern p = Pattern.compile("rep[0-9]+_");
+				String strCheck = "";
+				int counter = 0;
+				for (int i = 0; i < arrImg.length; i++) {
+					Matcher m = p.matcher(arrImg[i]);
+					if (m.find() && !strCheck.equals(m.group())) {
+						listRep[counter] = strCheck = m.group();
+						counter++;
+					}
+					if (counter == listRep.length)
+						break;
 				}
+
 				GenericDialog gdRepeat = new GenericDialog("Repetition");
 				gdRepeat.addMessage("Loading single 2D XANES in a repetition...");
-				gdRepeat.addChoice("Repeat", listRep, listRep[0]);
+				gdRepeat.addChoice("", listRep, listRep[0]);
 				gdRepeat.showDialog();
 				if (gdRepeat.wasCanceled())
 					return;
-				arrImg = extractArray("rep" + gdRepeat.getNextChoice(), arrImg);
+				arrImg = extractArray(gdRepeat.getNextChoice(), arrImg);
 			}
 			if (si.mosaic && intMode != 2) {
 				String[] listX = new String[si.numMosaicX];

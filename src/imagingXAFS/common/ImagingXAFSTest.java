@@ -35,6 +35,9 @@ import imagingXAFS.nw2a_ultra.*;
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-		IJ.log("" + true);
+		Pattern p = Pattern.compile("rep[0-9]+_");
+		Matcher m = p.matcher("rep01_00000_hogehoge");
+		if (m.find())
+			IJ.log(m.group());
 	}
 }
