@@ -42,6 +42,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 				return;
 			}
 			String[] arrImg = si.imageFiles;
+			String[] arrRef = si.referenceFiles;
 			if (si.nRepeatScan > 1) {
 				String[] listRep = new String[si.nRepeatScan];
 				Pattern p = Pattern.compile("rep[0-9]+_");
@@ -63,7 +64,9 @@ public class Load_Ultra2DXANES implements PlugIn {
 				gdRepeat.showDialog();
 				if (gdRepeat.wasCanceled())
 					return;
-				arrImg = extractArray(gdRepeat.getNextChoice(), arrImg);
+				String choice = gdRepeat.getNextChoice();
+				arrImg = extractArray(choice, arrImg);
+				arrRef = extractArray(choice, arrRef);
 			}
 			if (si.mosaic && intMode != 2) {
 				String[] listX = new String[si.numMosaicX];
@@ -112,7 +115,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 				switch (intMode) {
 				case 0:// "Apply reference"
 					impImg = loadAndAverage(arrImg, si.directory, i, si.nExposures);
-					impRef = loadAndAverage(si.referenceFiles, si.directory, i, si.refNExposures);
+					impRef = loadAndAverage(arrRef, si.directory, i, si.refNExposures);
 					impTgt = ic.run("divide create 32-bit", impRef, impImg);
 					impTgt.getProcessor().log();
 					impTgt.setTitle(impImg.getTitle().replace(".xrm", ""));
@@ -169,8 +172,10 @@ public class Load_Ultra2DXANES implements PlugIn {
 	}
 
 	private ImagePlus loadAndAverage(String[] list, String directory, int idxEne, int numExp) {
+		IJ.log("list.length="+list.length);
 		ImagePlus source[] = new ImagePlus[numExp];
 		for (int i = 0; i < source.length; i++) {
+			IJ.log("i="+i+", idxEne * numExp + i="+idxEne * numExp + i);
 			source[i] = XRM_Reader.Load(directory + list[idxEne * numExp + i], true);
 		}
 		return averageImagePlus(source);
