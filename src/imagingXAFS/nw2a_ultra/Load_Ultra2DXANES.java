@@ -172,10 +172,8 @@ public class Load_Ultra2DXANES implements PlugIn {
 	}
 
 	private ImagePlus loadAndAverage(String[] list, String directory, int idxEne, int numExp) {
-		IJ.log("list.length="+list.length);
 		ImagePlus source[] = new ImagePlus[numExp];
 		for (int i = 0; i < source.length; i++) {
-			IJ.log("i="+i+", idxEne * numExp + i="+idxEne * numExp + i);
 			source[i] = XRM_Reader.Load(directory + list[idxEne * numExp + i], true);
 		}
 		return averageImagePlus(source);
