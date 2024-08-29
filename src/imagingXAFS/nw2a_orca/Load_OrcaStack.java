@@ -192,11 +192,10 @@ public class Load_OrcaStack implements PlugIn {
 		OpenDialog.setDefaultDirectory(Paths.get(strImg).getParent().toString());
 
 		int intBin = OrcaCommon.getIntBinning();
+		impStack = new ImagePlus(Paths.get(strImg9809Path).getFileName().toString(), stack);
 		if (intBin > 1) {
 			impStack = impStack.resize(prop.width / intBin, prop.height / intBin, "average");
 			impStack.setTitle(Paths.get(strImg9809Path).getFileName().toString());
-		} else {
-			impStack = new ImagePlus(Paths.get(strImg9809Path).getFileName().toString(), stack);
 		}
 		ImagingXAFSCommon.setPropEnergies(impStack, energies);
 		OrcaCommon.setCalibration(impStack, prop, intBin);
