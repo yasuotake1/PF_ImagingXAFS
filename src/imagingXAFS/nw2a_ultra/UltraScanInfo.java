@@ -144,13 +144,16 @@ public class UltraScanInfo implements PlugIn {
 	private double[] getDistinctArray(String key, String[] source) {
 		ArrayList<Double> list = new ArrayList<Double>();
 		double d1 = getNumberBeforeTheKey(key, source[0]);
-		double d2 = d1;
+		boolean b1 = true;
 		list.add(d1);
 		for (int i = 1; i < source.length; i++) {
+			b1 = true;
 			d1 = getNumberBeforeTheKey(key, source[i]);
-			if (d1 != d2) {
+			for (int j = 0; j < list.size(); j++) {
+				b1 = list.get(j) == d1 ? false : b1;
+			}
+			if (b1) {
 				list.add(d1);
-				d2 = d1;
 			}
 		}
 		double[] target = new double[list.size()];
