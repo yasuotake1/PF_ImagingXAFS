@@ -2,8 +2,10 @@ package imagingXAFS.common;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -122,14 +124,12 @@ public class ImagingXAFSCommon implements PlugIn {
 			return null;
 		}
 
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(path.toString()));
+		try (BufferedReader br = new BufferedReader(new FileReader(path.toString()))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (!line.isEmpty())
 					rows.add(line);
 			}
-			br.close();
 			boolean is9809 = rows.get(0).trim().startsWith("9809");
 			if (is9809) {
 				do {
@@ -354,5 +354,12 @@ public class ImagingXAFSCommon implements PlugIn {
 
 	public static boolean isExistingPath(String path) {
 		return path != null && !path.isEmpty() && Files.exists(Paths.get(path));
+	}
+
+	public static void logStackTrace(Exception e) {
+		CharArrayWriter caw = new CharArrayWriter();
+		PrintWriter pw = new PrintWriter(caw);
+		e.printStackTrace(pw);
+		IJ.log(caw.toString());
 	}
 }

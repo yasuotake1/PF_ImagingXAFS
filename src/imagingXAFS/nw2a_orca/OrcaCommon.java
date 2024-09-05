@@ -53,13 +53,9 @@ public class OrcaCommon implements PlugIn {
 	public static OrcaProps readProps() {
 		Properties prop = new Properties();
 
-		InputStream is;
 		OrcaProps target = new OrcaProps();
-		try {
-			is = new FileInputStream(new File(PropPath));
+		try (InputStream is = new FileInputStream(new File(PropPath))) {
 			prop.load(is);
-			is.close();
-
 			target.dcmDirection = Integer.parseInt(prop.getProperty("dcmDirection"));
 			target.detectorPosition = Double.parseDouble(prop.getProperty("detectorPosition"));
 			target.pixelSize = Double.parseDouble(prop.getProperty("pixelSize"));
@@ -145,7 +141,8 @@ public class OrcaCommon implements PlugIn {
 				break;
 			}
 		} catch (IOException ex) {
-			IJ.error("Failed to load an ORCA image.");
+//			IJ.error("Failed to load an ORCA image.");
+			ImagingXAFSCommon.logStackTrace(ex);
 			return null;
 		}
 		ImagePlus imp = Raw.open(path, fi);
@@ -182,12 +179,9 @@ public class OrcaCommon implements PlugIn {
 	 * @throws IOException
 	 */
 	public static byte[] readBytes(String strPath, int offset, int length) throws IOException {
-		try {
+		try (FileInputStream fis = new FileInputStream(strPath)) {
 			byte[] buffer = new byte[length];
-			InputStream is = new FileInputStream(strPath);
-			is.skip(offset);
-			is.read(buffer, 0, length);
-			is.close();
+			fis.read(buffer, offset, length);
 			return buffer;
 		} catch (IOException ex) {
 			throw ex;

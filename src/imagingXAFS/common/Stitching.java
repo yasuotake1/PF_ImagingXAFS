@@ -105,9 +105,11 @@ public class Stitching implements PlugIn {
 	private String makeModifiedConfigFile(String sufReplacement) throws IOException {
 		String modFileName = "TileConfiguration" + sufReplacement.replace(".tif", "") + ".registered.txt";
 		String strTileConfig = new String(Files.readAllBytes(Paths.get(dir + output2)));
-		FileWriter fw = new FileWriter(dir + modFileName);
-		fw.write(strTileConfig.replace(getSuffix(firstFilePath), sufReplacement));
-		fw.close();
+		try (FileWriter fw = new FileWriter(dir + modFileName)) {
+			fw.write(strTileConfig.replace(getSuffix(firstFilePath), sufReplacement));
+		} catch (IOException ex) {
+			throw ex;
+		}
 		return modFileName;
 	}
 

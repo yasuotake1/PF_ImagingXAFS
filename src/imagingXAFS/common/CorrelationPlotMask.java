@@ -74,10 +74,7 @@ public class CorrelationPlotMask implements PlugIn {
 		SaveDialog sd = new SaveDialog("Save As ", "Correlation_" + t1 + "_" + t2, ".txt");
 		if (sd.getFileName() == null)
 			return;
-		try {
-			File file = new File(sd.getDirectory() + sd.getFileName());
-			FileWriter filewriter = new FileWriter(file);
-
+		try (FileWriter filewriter = new FileWriter(new File(sd.getDirectory() + sd.getFileName()))) {
 			String WriteText = t1 + "\t" + t2 + "\r\n";
 			filewriter.write(WriteText);
 
@@ -85,7 +82,6 @@ public class CorrelationPlotMask implements PlugIn {
 				WriteText = String.format("%.3f", arr1[i]) + "\t" + String.format("%.3f", arr2[i]) + "\r\n";
 				filewriter.write(WriteText);
 			}
-			filewriter.close();
 		} catch (IOException e) {
 			System.out.println(e);
 		}

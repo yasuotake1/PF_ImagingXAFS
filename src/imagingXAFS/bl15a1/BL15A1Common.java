@@ -60,16 +60,12 @@ public class BL15A1Common implements PlugIn {
 				path = dir + prefix + "_qscan_1" + suffix;
 				file = new File(path);
 			}
-			try {
-				FileReader in = new FileReader(path);
-				BufferedReader br = new BufferedReader(in);
+			try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 				String line;
 
 				while ((line = br.readLine()) != null) {
 					linesInfo.add(line);
 				}
-				br.close();
-				in.close();
 
 				String[] arrInfoX = (linesInfo.get(1)).split(",", 0);
 				String[] arrInfoY = (linesInfo.get(3)).split(",", 0);
@@ -126,12 +122,9 @@ public class BL15A1Common implements PlugIn {
 	public static BL15A1Props ReadProps() {
 		Properties prop = new Properties();
 
-		InputStream is;
 		BL15A1Props target = new BL15A1Props();
-		try {
-			is = new FileInputStream(new File(propPath));
+		try (InputStream is = new FileInputStream(new File(propPath))) {
 			prop.load(is);
-			is.close();
 
 			target.listSuffixes = prop.getProperty("listSuffixes").split(",", 16);
 			target.stageConf = Integer.parseInt(prop.getProperty("stageConf"));

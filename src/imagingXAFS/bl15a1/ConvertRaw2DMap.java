@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class ConvertRaw2DMap implements PlugIn {
-	FileWriter fw;
 
 	public void run(String arg) {
 		String[] labels;
@@ -19,8 +18,7 @@ public class ConvertRaw2DMap implements PlugIn {
 		if (od.getPath() == null)
 			return;
 		String strPreview = "";
-		try {
-			BufferedReader br = Files.newBufferedReader(Paths.get(od.getPath()));
+		try (BufferedReader br = Files.newBufferedReader(Paths.get(od.getPath()))) {
 			strPreview = br.readLine();
 			labels = strPreview.split(",");
 			for (int i = 0; i < labels.length; i++) {
@@ -30,7 +28,6 @@ public class ConvertRaw2DMap implements PlugIn {
 			for (int i = 1; i < 5; i++) {
 				strPreview += br.readLine() + "\n";
 			}
-			br.close();
 		} catch (IOException e) {
 			return;
 		}
@@ -121,7 +118,7 @@ public class ConvertRaw2DMap implements PlugIn {
 				int idx = name.lastIndexOf('.');
 				if (idx > 0)
 					name = name.substring(0, idx);
-				String path="";
+				String path = "";
 				for (int i = 0; i < labels.length; i++) {
 					if (listUse[i]) {
 						path = od.getDirectory() + name + "_" + labels[i] + ".txt";
@@ -140,10 +137,8 @@ public class ConvertRaw2DMap implements PlugIn {
 	}
 
 	void writeTextFile(String path, String content) {
-		try {
-			fw = new FileWriter(path);
+		try (FileWriter fw = new FileWriter(path)) {
 			fw.write(content);
-			fw.close();
 		} catch (IOException e) {
 			IJ.error("Failed to write a text file.");
 		}

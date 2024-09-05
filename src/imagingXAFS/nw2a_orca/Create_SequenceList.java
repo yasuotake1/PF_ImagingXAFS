@@ -2,7 +2,6 @@ package imagingXAFS.nw2a_orca;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -24,14 +23,9 @@ public class Create_SequenceList implements PlugIn {
 		String pathFirst = od.getPath();
 		String nameFirst = od.getFileName();
 		String line = "";
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(new File(pathFirst)));
+		try (BufferedReader br = new BufferedReader(new FileReader(new File(pathFirst)))) {
 			line = br.readLine();
-			br.close();
-		} catch (FileNotFoundException e) {
-			IJ.error(e.getMessage());
-			return;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			IJ.error(e.getMessage());
 			return;
 		}
@@ -54,10 +48,8 @@ public class Create_SequenceList implements PlugIn {
 		}
 
 		String pathSeqList = (Paths.get(dirFirst)).getParent() + File.separator + "seqList_" + prefix + ".txt";
-		try {
-			FileWriter fw = new FileWriter(pathSeqList);
+		try (FileWriter fw = new FileWriter(pathSeqList)) {
 			fw.write(content);
-			fw.close();
 		} catch (IOException e) {
 			IJ.error("Failed to write a text file.");
 			return;
