@@ -6,13 +6,11 @@ import ij.gui.*;
 import ij.io.*;
 import ij.plugin.PlugIn;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -256,34 +254,30 @@ public class SVD implements PlugIn {
 	}
 
 	private static double[] getInterpolatedSpectrum(String strPath, double[] energies) {
-		Path path = Paths.get(strPath);
 		double[] arrEne = { 0 };
 		double[] arrInt = { 0 };
 		try {
-			String[] lines = Files.lines(path).toArray(String[]::new);
-			List<String> linesWithoutComment = new ArrayList<String>();
-			for (int i = 0; i < lines.length; i++) {
-				if (!lines[i].isEmpty() && !lines[i].startsWith("#"))
-					linesWithoutComment.add(lines[i].trim());
-			}
-			arrEne = new double[linesWithoutComment.size()];
-			arrInt = new double[linesWithoutComment.size()];
-			String[] values;
+			List<String> lines = ImagingXAFSCommon.linesFromFile(strPath);
 			int columnInt = 1;
-			if (strPath.endsWith(".nor"))
+			if (strPath.endsWith(".nor")) {
 				columnInt = 3;// Use 'flat' in case of Athena .nor file.
-			for (int i = 0; i < linesWithoutComment.size(); i++) {
-				values = linesWithoutComment.get(i).split("[\\s]+");
+				lines = lines.stream().filter(s -> !s.startsWith("#")).map(s -> s.trim()).collect(Collectors.toList());
+			} else {
+				lines.remove(0);
+			}
+			arrEne = new double[lines.size()];
+			arrInt = new double[lines.size()];
+			String[] values;
+			for (int i = 0; i < lines.size(); i++) {
+				values = lines.get(i).split("[,\\s]+");
 				arrEne[i] = Double.parseDouble(values[0]);
 				arrInt[i] = Double.parseDouble(values[columnInt]);
 			}
-		} catch (IOException | NumberFormatException e) {
-			IJ.error("Failed to load " + path.getFileName().toString() + ".");
-			return null;
-		}
-
-		if (arrEne[0] > energies[0] || arrEne[arrEne.length - 1] < energies[energies.length - 1]) {
-			IJ.error("Insufficient energy range in " + path.getFileName().toString() + ".");
+			if (arrEne[0] > energies[0] || arrEne[arrEne.length - 1] < energies[energies.length - 1]) {
+				throw new Exception("Insufficient energy range");
+			}
+		} catch (Exception e) {
+			IJ.error("Failed to load " + Paths.get(strPath).getFileName().toString() + ".");
 			return null;
 		}
 

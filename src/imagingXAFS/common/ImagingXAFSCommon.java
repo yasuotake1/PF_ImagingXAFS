@@ -1,9 +1,7 @@
 package imagingXAFS.common;
 
 import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.CharArrayWriter;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -12,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -117,34 +117,33 @@ public class ImagingXAFSCommon implements PlugIn {
 		return readValues(path, false, column);
 	}
 
-	private static double[] readValues(String path, boolean applyAtoEfor9809, int column) {
-		List<String> rows = new ArrayList<String>();
-		double[] values;
-		if (!isExistingPath(path)) {
-			return null;
+	public static List<String> linesFromFile(String path) throws IOException {
+		try (Stream<String> lines = Files.lines(Paths.get(path))) {
+			return lines.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+		} catch (IOException e) {
+			throw e;
 		}
+	}
 
-		try (BufferedReader br = new BufferedReader(new FileReader(path.toString()))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				if (!line.isEmpty())
-					rows.add(line);
-			}
-			boolean is9809 = rows.get(0).trim().startsWith("9809");
+	private static double[] readValues(String path, boolean applyAtoEfor9809, int column) {
+		double[] values;
+		try {
+			List<String> lines = linesFromFile(path);
+			boolean is9809 = lines.get(0).trim().startsWith("9809");
 			if (is9809) {
 				do {
-					setSpacCrystal(rows.get(0));
-					rows.remove(0);
-				} while (!(rows.get(0)).trim().startsWith("Offset"));
-				values = new double[rows.size() - 1];
+					setSpacCrystal(lines.get(0));
+					lines.remove(0);
+				} while (!(lines.get(0)).trim().startsWith("Offset"));
+				values = new double[lines.size() - 1];
 				for (int i = 0; i < values.length; i++) {
-					values[i] = Double.parseDouble((rows.get(i + 1)).substring(column * 10, column * 10 + 10).trim());
+					values[i] = Double.parseDouble((lines.get(i + 1)).substring(column * 10, column * 10 + 10).trim());
 				}
 			} else {
-				values = new double[rows.size() - 1];
+				values = new double[lines.size() - 1];
 				String[] arrSplit;
 				for (int i = 0; i < values.length; i++) {
-					arrSplit = rows.get(i + 1).split(",");
+					arrSplit = lines.get(i + 1).split("[,\\s]+");
 					values[i] = Double.parseDouble(arrSplit[column]);
 				}
 			}
@@ -153,7 +152,7 @@ public class ImagingXAFSCommon implements PlugIn {
 					values[i] = AtoE(values[i]);
 				}
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.err.println(e.getMessage());
 			return null;
 		}
