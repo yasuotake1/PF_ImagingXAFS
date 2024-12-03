@@ -1,6 +1,7 @@
 package imagingXAFS.nw2a_ultra;
 
 import imagingXAFS.common.ImagingXAFSCommon;
+import imagingXAFS.common.ImagingXAFSDriftCorrection;
 
 import java.awt.Color;
 
@@ -35,8 +36,8 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		gd.addNumericField("Gaussian blur sigma (radius)", 2.0, 1);
 		gd.addCheckbox("Edge detection", false);
 		gd.addMessage("Calculation:");
-		gd.addChoice("Calculate drift to", UltraDriftCorrection.calculationMode,
-				UltraDriftCorrection.calculationMode[0]);
+		gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
+				ImagingXAFSDriftCorrection.calculationMode[0]);
 		gd.addCheckbox("Subpixel accuracy", false);
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Plot results", true);
@@ -48,9 +49,6 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 
 		ImagePlus impSrc = WindowManager.getImage(listStackId[gd.getNextChoiceIndex()]);
 		double[] energy = ImagingXAFSCommon.getPropEnergies(impSrc);
-		int wid = impSrc.getWidth();
-		int hei = impSrc.getHeight();
-		int slc = impSrc.getNSlices();
 		Roi roi = gd.getNextBoolean() ? impSrc.getRoi() : null;
 		double sigma = gd.getNextNumber();
 		boolean edge = gd.getNextBoolean();
@@ -59,9 +57,9 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		boolean plot = gd.getNextBoolean();
 		boolean crop = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
-		UltraDriftCorrection udc = new UltraDriftCorrection();
+		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
 
-		ImagePlus impResult = udc.GetCorrectedStack(impSrc, sigma, edge, roi, mode, subpixel);
+		ImagePlus impResult = udc.GetCorrectedStack(impSrc, sigma, edge, roi, mode, subpixel, crop);
 		if (plot) {
 			Plot plotCorrel = new Plot("Drift correction results of " + impSrc.getTitle(), "Photon energy (eV)",
 					"Correlation");
@@ -83,29 +81,6 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 			plotOffset.setColor(Color.black);
 			plotOffset.addLegend("Offset X\tOffset Y");
 			plotOffset.setLimitsToFit(true);
-		}
-		if (crop) {
-			double doubleL = 0.0;
-			double doubleR = 0.0;
-			double doubleT = 0.0;
-			double doubleB = 0.0;
-			for (int i = 0; i < slc; i++) {
-				doubleL = Math.max(doubleL, udc.offsetX[i]);
-				doubleR = Math.min(doubleR, udc.offsetX[i]);
-				doubleT = Math.max(doubleT, udc.offsetY[i]);
-				doubleB = Math.min(doubleB, udc.offsetY[i]);
-			}
-			int intL = (int) Math.ceil(doubleL);
-			int intR = (int) Math.floor(doubleR);
-			int intT = (int) Math.ceil(doubleT);
-			int intB = (int) Math.floor(doubleB);
-			Roi roiToCrop = new Roi(intL, intT, wid - intL + intR, hei - intT + intB);
-			roiToCrop.setPosition(0);
-			impResult.setRoi(roiToCrop);
-			ImagePlus impCrop = impResult.crop("stack");
-			impCrop.setTitle(impResult.getTitle());
-			impCrop.setFileInfo(impResult.getOriginalFileInfo());
-			impResult = impCrop;
 		}
 		impResult.show();
 		if (autoSave) {

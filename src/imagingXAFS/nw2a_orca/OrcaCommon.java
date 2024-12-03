@@ -318,4 +318,58 @@ public class OrcaCommon implements PlugIn {
 	public static boolean isInteger(String value) {
 		return value != null && !value.isEmpty() && value.matches("[0-9]+");
 	}
+
+	/**
+	 * Returns a parent path string.
+	 * 
+	 * @return
+	 */
+	public static String getStrParent(String p) {
+		return Paths.get(p).getParent().toString();
+	}
+
+	/**
+	 * Returns a grandparent path string.
+	 * 
+	 * @return
+	 */
+	public static String getStrGrandParent(String p) {
+		return Paths.get(p).getParent().getParent().toString();
+	}
+
+	/**
+	 * Returns a path string without trailing index.
+	 * 
+	 * @return
+	 */
+	public static String removeTrailingIdx(String str) {
+		while (Character.isDigit(str.charAt(str.length() - 1))) {
+			str = str.substring(0, str.length() - 1);
+		}
+		return str;
+	}
+
+	public static String getNextName(String name) {
+		try {
+			int idx = Integer.parseInt(name.substring(name.length() - 3));
+			return OrcaCommon.removeTrailingIdx(name) + String.format("%03d", idx + 1);
+		} catch (NumberFormatException | IndexOutOfBoundsException ex) {
+			return OrcaCommon.removeTrailingIdx(name);
+		}
+	}
+
+	public static String getNextPath(String path) {
+		String name = Paths.get(path).getFileName().toString();
+		return Paths.get(getStrGrandParent(path), getNextName(name), getNextName(name)).toString();
+	}
+
+	public static int getRepetition(String firstPath) {
+		String str = firstPath;
+		int rep = 0;
+		while (ImagingXAFSCommon.isExistingPath(str)) {
+			rep++;
+			str = getNextPath(str);
+		}
+		return rep;
+	}
 }

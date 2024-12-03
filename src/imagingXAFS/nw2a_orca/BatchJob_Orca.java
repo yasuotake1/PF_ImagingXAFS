@@ -17,6 +17,7 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.WaitForUserDialog;
+import ij.io.OpenDialog;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.PlugIn;
 
@@ -37,6 +38,7 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
 		gd.addCheckbox("Save stack files", false);
 		gd.addMessage("Preprocess:");
+		gd.addCheckbox("Drift correction (Requires specified ROI list):", false);
 		gd.addCheckbox("Apply 3D Gaussian blur", false);
 		gd.addMessage("Normalization:");
 		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
@@ -72,6 +74,7 @@ public class BatchJob_Orca implements PlugIn {
 		OrcaCommon.ofsEne = gd.getNextNumber();
 		boolean i0Corr = gd.getNextBoolean();
 		boolean saveStack = gd.getNextBoolean();
+		boolean driftCorr = gd.getNextBoolean();
 		boolean filter = gd.getNextBoolean();
 		double[] energy = ImagingXAFSCommon.readEnergies(strImg9809Path);
 		if (OrcaCommon.ofsEne <= -0.01 || OrcaCommon.ofsEne >= 0.01) {
@@ -108,6 +111,7 @@ public class BatchJob_Orca implements PlugIn {
 		boolean complement = gd.getNextBoolean();
 		boolean showStitched = gd.getNextBoolean();
 
+		int rep = OrcaCommon.getRepetition(strImg9809Path);
 		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
 		String strOption = "transmission=" + strImgPath + " reference=" + strRefPath;
@@ -127,6 +131,27 @@ public class BatchJob_Orca implements PlugIn {
 		int roiWidth = roi == null ? impRoi.getWidth() : roi.getBounds().width;
 		int roiHeight = roi == null ? impRoi.getHeight() : roi.getBounds().height;
 		impRoi.close();
+		Roi[] driftRois = new Roi[rep];
+		if (driftCorr) {
+			OpenDialog od = new OpenDialog("Drift correction ROIs");
+			if (od.getPath() == null)
+				return;
+			try {
+				List<String> strDriftRois = Files.readAllLines(Paths.get(od.getPath()));
+				int tmpX, tmpY, tmpW, tmpH;
+				for (int i = 0; i < rep; i++) {
+					String[] bounds = strDriftRois.get(i).split(",");
+					tmpX = Integer.parseInt(bounds[0]);
+					tmpY = Integer.parseInt(bounds[1]);
+					tmpW = Integer.parseInt(bounds[2]);
+					tmpH = Integer.parseInt(bounds[3]);
+					driftRois[i] = (tmpW == 0 || tmpH == 0) ? null : new Roi(tmpX, tmpY, tmpW, tmpH);
+				}
+			} catch (Exception ex) {
+				IJ.log("Failed to read drift correction ROIs.");
+				return;
+			}
+		}
 		double xsigma = 1.0, ysigma = 1.0, zsigma = 7.0;
 		if (filter) {
 			gd = new GenericDialog("3D Gaussian Blur");
@@ -145,19 +170,19 @@ public class BatchJob_Orca implements PlugIn {
 		IJ.run("Close All");
 		System.gc();
 
-		ImagePlus impMut, impCrop, impNorm, impDmut, impLast;
+		ImagePlus impMut, impCrop, impCorr, impNorm, impDmut, impLast;
 		String baseName;
 		Instant startTime = Instant.now();
 		String first9809Path = strImg9809Path;
-		int rep = getRepetition();
-		Path dirStitch = Paths.get(getImg9809Root(), "stitching");
+		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
+		String dirStitch = OrcaCommon.getStrGrandParent(first9809Path) + "/" + "stitching";
 		ArrayList<String> sufList = new ArrayList<String>();
 		Stitching sti = new Stitching();
 
 		if (copy) {
-			if (!Files.exists(dirStitch)) {
+			if (!Files.exists(Paths.get(dirStitch))) {
 				try {
-					Files.createDirectory(dirStitch);
+					Files.createDirectory(Paths.get(dirStitch));
 				} catch (IOException ex) {
 					IJ.error("Failed to create temporary folder for stitching.");
 					return;
@@ -187,18 +212,25 @@ public class BatchJob_Orca implements PlugIn {
 			impCrop.setTitle(baseName);
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
+			if (driftCorr && driftRois[i] != null) {
+				impCorr = udc.GetCorrectedStack(impCrop, 1.0, false, driftRois[i], 0, true, true);
+				impCorr.setTitle(impCrop.getTitle());
+				impCrop.close();
+			} else {
+				impCorr = impCrop;
+			}
 			if (filter) {
 				IJ.log("Applying filter...");
-				GaussianBlur3D.blur(impCrop, xsigma, ysigma, zsigma);
+				GaussianBlur3D.blur(impCorr, xsigma, ysigma, zsigma);
 				IJ.log("\\Update:Applying filter...done.");
 			}
-			impCrop.show();
-			Normalization.Normalize(impCrop, zeroSlope, threshold, false, statsImages, true, saveStack);
+			impCorr.show();
+			Normalization.Normalize(impCorr, zeroSlope, threshold, false, statsImages, true, saveStack);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
 			if (clip) {
 				Clip_Values.ClipValues(impDmut, 5F, 0F, 0F, false);
-				IJ.saveAsTiff(impDmut, impCrop.getOriginalFileInfo().directory + impDmut.getTitle());
+				IJ.saveAsTiff(impDmut, impCorr.getOriginalFileInfo().directory + impDmut.getTitle());
 			}
 			if (doSVD) {
 				SVD.setDataMatrix(impNorm);
@@ -226,14 +258,14 @@ public class BatchJob_Orca implements PlugIn {
 						}
 					}
 				}
-				impCrop.setSlice(impCrop.getNSlices());
-				impLast = new ImagePlus(baseName + "_LastImage.tif", impCrop.getProcessor());
-				IJ.saveAsTiff(impLast, impCrop.getOriginalFileInfo().directory + impLast.getTitle());
+				impCorr.setSlice(impCorr.getNSlices());
+				impLast = new ImagePlus(baseName + "_LastImage.tif", impCorr.getProcessor());
+				IJ.saveAsTiff(impLast, impCorr.getOriginalFileInfo().directory + impLast.getTitle());
 				for (int j = 0; j < sufList.size(); j++) {
-					Path srcCopy = Paths.get(getImg9809Dir(), baseName + sufList.get(j));
+					Path srcCopy = Paths.get(OrcaCommon.getStrParent(strImg9809Path), baseName + sufList.get(j));
+					Path tgtCopy = Paths.get(dirStitch, baseName + sufList.get(j));
 					try {
-						Files.copy(srcCopy, dirStitch.resolve(srcCopy.getFileName()),
-								StandardCopyOption.REPLACE_EXISTING);
+						Files.copy(srcCopy, tgtCopy, StandardCopyOption.REPLACE_EXISTING);
 					} catch (IOException ex) {
 						IJ.error("Failed to copy result file(s).\n" + ex.getMessage());
 						return;
@@ -243,12 +275,12 @@ public class BatchJob_Orca implements PlugIn {
 
 			IJ.run("Close All");
 			System.gc();
-			setNextImg9809();
+			strImg9809Path = OrcaCommon.getNextPath(strImg9809Path);
 		}
 
 		strImg9809Path = first9809Path;
 		if (stitch) {
-			if (!sti.register(dirStitch.toString() + "/" + getImg9809Name() + sufList.get(0))) {
+			if (!sti.register(dirStitch + "/" + getImg9809Name() + sufList.get(0))) {
 				IJ.error("Failed to calculate stitching configuration.");
 				return;
 			}
@@ -267,7 +299,7 @@ public class BatchJob_Orca implements PlugIn {
 				} else {
 					IJ.run("Enhance Contrast", "saturated=0.35");
 				}
-				IJ.saveAsTiff(impCurrent, dirStitch.toString() + "/" + impCurrent.getTitle());
+				IJ.saveAsTiff(impCurrent, dirStitch + "/" + impCurrent.getTitle());
 				if (!showStitched) {
 					impCurrent.close();
 				}
@@ -282,49 +314,6 @@ public class BatchJob_Orca implements PlugIn {
 
 	private String getImg9809Name() {
 		return Paths.get(strImg9809Path).getFileName().toString();
-	}
-
-	private String getImg9809NameWithoutIdx() {
-		try {
-			return getImg9809Name().substring(0, getImg9809Name().length() - 3);
-		} catch (IndexOutOfBoundsException ex) {
-			return getImg9809Name().replaceAll("[0-9]", "");
-		}
-	}
-
-	private String getImg9809Dir() {
-		return Paths.get(strImg9809Path).getParent().toString() + "/";
-	}
-
-	private String getImg9809Root() {
-		return Paths.get(strImg9809Path).getParent().getParent().toString();
-	}
-
-	private void setNextImg9809() {
-		strImg9809Path = Paths.get(getImg9809Root(), getNextName(), getNextName()).toString();
-		return;
-	}
-
-	private String getNextName() {
-		try {
-			int idx = Integer.parseInt(getImg9809Name().substring(getImg9809Name().length() - 3));
-			return getImg9809NameWithoutIdx() + String.format("%03d", idx + 1);
-		} catch (IndexOutOfBoundsException ex) {
-			return getImg9809NameWithoutIdx();
-		} catch (NumberFormatException ex) {
-			return getImg9809NameWithoutIdx();
-		}
-	}
-
-	private int getRepetition() {
-		String tmp = strImg9809Path;
-		int rep = 0;
-		do {
-			rep++;
-			setNextImg9809();
-		} while (ImagingXAFSCommon.isExistingPath(strImg9809Path));
-		strImg9809Path = tmp;
-		return rep;
 	}
 
 }

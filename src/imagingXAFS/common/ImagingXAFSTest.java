@@ -41,12 +41,10 @@ public class ImagingXAFSTest implements PlugIn {
 		if (gd.wasCanceled())
 			return;
 
-		Pattern p = Pattern.compile("[^#].*;.*;\\s*\\([-0-9]+\\.0+,\\s*[-0-9]+\\.0+\\)");
 		String str = gd.getNextString();
-		Matcher m = p.matcher(str);
-		if(m.matches()) {
-			IJ.log(str.substring(0, str.lastIndexOf(';')+1));
+		while(Character.isDigit(str.charAt(str.length()-1))) {
+			str=str.substring(0, str.length()-1);
 		}
-		
+		IJ.log(str);
 	}
 }

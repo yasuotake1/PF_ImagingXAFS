@@ -1,6 +1,4 @@
-package imagingXAFS.nw2a_ultra;
-
-import imagingXAFS.common.ImagingXAFSCommon;
+package imagingXAFS.common;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -18,7 +16,7 @@ import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.PairWiseStitchingResult;
 import mpicbg.stitching.StitchingParameters;
 
-public class UltraDriftCorrection implements PlugIn {
+public class ImagingXAFSDriftCorrection implements PlugIn {
 
 	public static final String[] calculationMode = { "Highest-energy image", "Each following image" };
 	public double[] phaseCorrelation;
@@ -30,12 +28,15 @@ public class UltraDriftCorrection implements PlugIn {
 	}
 
 	public ImagePlus GetCorrectedStack(ImagePlus imp, double sigma, boolean variance, Roi roi, int mode,
-			boolean subpixel) {
+			boolean subpixel, boolean crop) {
 		double energy[] = ImagingXAFSCommon.getPropEnergies(imp);
 		if (energy == null)
 			return null;
 
+		int wid = imp.getWidth();
+		int hei = imp.getHeight();
 		int slc = imp.getNSlices();
+
 		int currentSlice = imp.getSlice();
 		String[] labels = imp.getStack().getSliceLabels();
 		imp.setRoi(roi);
@@ -116,17 +117,38 @@ public class UltraDriftCorrection implements PlugIn {
 		FileInfo fi = imp.getOriginalFileInfo();
 		String title = imp.getTitle().endsWith(".tif") ? imp.getTitle().replace(".tif", "_corr.tif")
 				: imp.getTitle() + "_corr.tif";
-		impResult.setTitle(title);
 		fi.fileName = title;
-		impResult.setFileInfo(fi);
 		ImageProcessor ip;
 		for (int i = 0; i < slc; i++) {
+			IJ.showStatus("Applying drift correction " + i + "/" + slc);
 			ip = impResult.getStack().getProcessor(i + 1);
 			ip.setInterpolationMethod(ImageProcessor.BILINEAR);
 			ip.translate(ox[i], oy[i]);
 		}
-		impResult.setSlice(currentSlice);
 		imp.show();
+		if (crop) {
+			double doubleL = 0.0;
+			double doubleR = 0.0;
+			double doubleT = 0.0;
+			double doubleB = 0.0;
+			for (int i = 0; i < slc; i++) {
+				doubleL = Math.max(doubleL, offsetX[i]);
+				doubleR = Math.min(doubleR, offsetX[i]);
+				doubleT = Math.max(doubleT, offsetY[i]);
+				doubleB = Math.min(doubleB, offsetY[i]);
+			}
+			int intL = (int) Math.ceil(doubleL);
+			int intR = (int) Math.floor(doubleR);
+			int intT = (int) Math.ceil(doubleT);
+			int intB = (int) Math.floor(doubleB);
+			Roi roiToCrop = new Roi(intL, intT, wid - intL + intR, hei - intT + intB);
+			roiToCrop.setPosition(0);
+			impResult.setRoi(roiToCrop);
+			impResult = impResult.crop("stack");
+		}
+		impResult.setTitle(title);
+		impResult.setFileInfo(fi);
+		impResult.setSlice(currentSlice);
 		return impResult;
 	}
 }
