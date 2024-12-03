@@ -29,8 +29,8 @@ public class BatchJob_Orca implements PlugIn {
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Batch job: NW2A ImagingXAFS");
 		gd.addMessage("Data source:");
-		gd.addFileField("First transmission images (9809 format)", OrcaCommon.strImg);
-		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
+		gd.addFileField("First transmission images (9809 format)", strImg9809Path);
+		gd.addFileField("Reference images (9809 format) or constant", strRef9809Path);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
 		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
@@ -132,12 +132,26 @@ public class BatchJob_Orca implements PlugIn {
 		int roiHeight = roi == null ? impRoi.getHeight() : roi.getBounds().height;
 		impRoi.close();
 		Roi[] driftRois = new Roi[rep];
+		double driftSigma = 1.0;
+		boolean driftEdge = false;
+		int driftMode = 0;
 		if (driftCorr) {
-			OpenDialog od = new OpenDialog("Drift correction ROIs");
-			if (od.getPath() == null)
+			gd = new GenericDialog("Drift correction");
+			gd.addFileField("Drift correction ROIs", "");
+			gd.addCheckbox("Use ROI for calculation", false);
+			gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
+			gd.addCheckbox("Edge detection", false);
+			gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
+					ImagingXAFSDriftCorrection.calculationMode[0]);
+			gd.showDialog();
+			if (gd.wasCanceled())
 				return;
+			String pathDriftRois = gd.getNextString();
+			driftSigma = gd.getNextNumber();
+			driftEdge = gd.getNextBoolean();
+			driftMode = gd.getNextChoiceIndex();
 			try {
-				List<String> strDriftRois = Files.readAllLines(Paths.get(od.getPath()));
+				List<String> strDriftRois = Files.readAllLines(Paths.get(pathDriftRois));
 				int tmpX, tmpY, tmpW, tmpH;
 				for (int i = 0; i < rep; i++) {
 					String[] bounds = strDriftRois.get(i).split(",");
@@ -213,7 +227,7 @@ public class BatchJob_Orca implements PlugIn {
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
 			if (driftCorr && driftRois[i] != null) {
-				impCorr = udc.GetCorrectedStack(impCrop, 1.0, false, driftRois[i], 0, true, true);
+				impCorr = udc.GetCorrectedStack(impCrop, driftSigma, driftEdge, driftRois[i], driftMode, true, true);
 				impCorr.setTitle(impCrop.getTitle());
 				impCrop.close();
 			} else {
