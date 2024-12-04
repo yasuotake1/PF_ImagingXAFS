@@ -273,12 +273,9 @@ public class SVD implements PlugIn {
 				arrEne[i] = Double.parseDouble(values[0]);
 				arrInt[i] = Double.parseDouble(values[columnInt]);
 			}
-			if (arrEne[0] > energies[0] || arrEne[arrEne.length - 1] < energies[energies.length - 1]) {
-				String s = "Insufficient energy range.";
-				s += "\narrEne[0]=" + arrEne[0] + ", energies[0]=" + energies[0];
-				s += "\narrEne[" + (arrEne.length - 1) + "]=" + arrEne[arrEne.length - 1] + ", energies["
-						+ (energies.length - 1) + "]=" + energies[energies.length - 1];
-				throw new Exception(s);
+			if ((arrEne[0] - 0.01) > energies[0]
+					|| (arrEne[arrEne.length - 1] + 0.01) < energies[energies.length - 1]) {
+				throw new Exception("Insufficient energy range.");
 			}
 		} catch (Exception e) {
 			IJ.error("Failed to load " + Paths.get(strPath).getFileName().toString() + ".");
