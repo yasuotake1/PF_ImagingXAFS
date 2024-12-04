@@ -26,25 +26,27 @@ OrcaProps.config is used to store data import and energy correction parameters.
 # Installation
 Place 'PF_ImaginagXAFS.jar', 'commons-math3-3.6.1.jar', 'poi-3.17.jar', 'BL15A1Props.config', and 'OrcaProps.config' in /plugins/PF_ImagingXAFS/.  
 Place 'Jet.lut' in /luts/.  
+Download 'TurboReg_.jar' from 
+[TurboReg website](https://bigwww.epfl.ch/thevenaz/turboreg/ "TurboReg: An ImageJ plugin for the automatic alignment of a source image or a stack to a target image.")
+ and place it anywhere in the /plugins/ folder.  
 If your ImageJ/Fiji already has installed [mrsutherland/XRM_Reader](https://github.com/mrsutherland/XRM_Reader "mrsutherland/XRM_Reader: ImageJ plugin to read xrm files.") 
 plugin, remove it to avoid conflicts.  
 On vanilla ImageJ, 'Stitching_-3.1.6.jar' and many other dependencies are necessary to run stiching and drift correction functions.
 
 # Acknowledgements
 Stitching function in imagingXAFS.common and drift correction function in imagingXAFS.nw2a_ultra use 
-[fiji/Stiching](https://github.com/fiji/Stitching "fiji/Stitching: Fiji's Stitching plugins reconstruct big images from tiled input images.") 
-plugin.
-
+[fiji/Stiching](https://github.com/fiji/Stitching "fiji/Stitching: Fiji's Stitching plugins reconstruct big images from tiled input images.")
+ plugin.  
+The drift correction function also uses 
+[TurboReg](https://bigwww.epfl.ch/thevenaz/turboreg/ "TurboReg: An ImageJ plugin for the automatic alignment of a source image or a stack to a target image.")
+ plugin.  
 Modified version of [mrsutherland/XRM_Reader](https://github.com/mrsutherland/XRM_Reader "mrsutherland/XRM_Reader: ImageJ plugin to read xrm files.")
-plugin is used in importing Zeiss Ultra XRM images.
-
+plugin is used in importing Zeiss Ultra XRM images.  
 The energy correction method in imagingXAFS.nw2a_orca is based on 
-[M. Katayama et al.](https://doi.org/10.1107/S0909049512028282 "M. Katayama et al., J. Synchrotron Rad. 19, 717 (2012).")
-
+[M. Katayama et al.](https://doi.org/10.1107/S0909049512028282 "M. Katayama et al., J. Synchrotron Rad. 19, 717 (2012).")  
 The manner of Imaging XAFS data analysis in this plugin is highly inspired by 
 [TXM Wizard](https://sourceforge.net/projects/txm-wizard/ "TXM-Wizard download | SourceForge.net"). 
-About TXM Wizard, refer to [Y. Liu et al.](https://doi.org/10.1107/S0909049511049144 "Y. Liu et al., J. Synchrotron Rad. 19, 281 (2012).")
-
+About TXM Wizard, refer to [Y. Liu et al.](https://doi.org/10.1107/S0909049511049144 "Y. Liu et al., J. Synchrotron Rad. 19, 281 (2012).")  
 Singular value decomposition in imagingXAFS.common is based on [Koprinarov et al.](https://doi.org/10.1021/jp013281l "I. N. Koprinarov et al., J. Phys. Chem. B 106, 5358 (2002)."),
 that is commonly used for soft X-ray scanning transmission X-ray microscopy (STXM) data analysis: 
 [aXis2000](http://unicorn.chemistry.mcmaster.ca/axis/aXis2000.html "aXis2000 source").
