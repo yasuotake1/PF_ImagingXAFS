@@ -278,6 +278,7 @@ public class SVD implements PlugIn {
 			}
 		} catch (Exception e) {
 			IJ.error("Failed to load " + Paths.get(strPath).getFileName().toString() + ".");
+			IJ.log(e.getMessage());
 			return null;
 		}
 
