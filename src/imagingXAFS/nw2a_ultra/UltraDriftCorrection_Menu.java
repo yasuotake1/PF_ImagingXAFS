@@ -36,9 +36,10 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		gd.addNumericField("Gaussian blur sigma (radius)", 2.0, 1);
 		gd.addCheckbox("Edge detection", false);
 		gd.addMessage("Calculation:");
+		gd.addChoice("Optimization", ImagingXAFSDriftCorrection.optimization,
+				ImagingXAFSDriftCorrection.optimization[0]);
 		gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
 				ImagingXAFSDriftCorrection.calculationMode[0]);
-		gd.addCheckbox("Subpixel accuracy", false);
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Plot results", true);
 		gd.addCheckbox("Crop", true);
@@ -52,25 +53,27 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		Roi roi = gd.getNextBoolean() ? impSrc.getRoi() : null;
 		double sigma = gd.getNextNumber();
 		boolean edge = gd.getNextBoolean();
+		int optimization = gd.getNextChoiceIndex();
 		int mode = gd.getNextChoiceIndex();
-		boolean subpixel = gd.getNextBoolean();
 		boolean plot = gd.getNextBoolean();
 		boolean crop = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
 		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
 
-		ImagePlus impResult = udc.GetCorrectedStack(impSrc, sigma, edge, roi, mode, subpixel, crop);
+		ImagePlus impResult = udc.GetCorrectedStack(impSrc, optimization, mode, sigma, edge, roi, crop);
 		if (plot) {
-			Plot plotCorrel = new Plot("Drift correction results of " + impSrc.getTitle(), "Photon energy (eV)",
-					"Correlation");
-			plotCorrel.setColor(colorPhaseCorr, colorPhaseCorr);
-			plotCorrel.add(styleData, energy, udc.phaseCorrelation);
-			plotCorrel.setColor(colorCrossCorr, colorCrossCorr);
-			plotCorrel.add(styleData, energy, udc.crossCorrelation);
-			plotCorrel.show();
-			plotCorrel.setColor(Color.black);
-			plotCorrel.addLegend("Phase correlation\tCross correlation");
-			plotCorrel.setLimitsToFit(true);
+			if (udc.phaseCorrelation != null && udc.crossCorrelation != null) {
+				Plot plotCorrel = new Plot("Drift correction results of " + impSrc.getTitle(), "Photon energy (eV)",
+						"Correlation");
+				plotCorrel.setColor(colorPhaseCorr, colorPhaseCorr);
+				plotCorrel.add(styleData, energy, udc.phaseCorrelation);
+				plotCorrel.setColor(colorCrossCorr, colorCrossCorr);
+				plotCorrel.add(styleData, energy, udc.crossCorrelation);
+				plotCorrel.show();
+				plotCorrel.setColor(Color.black);
+				plotCorrel.addLegend("Phase correlation\tCross correlation");
+				plotCorrel.setLimitsToFit(true);
+			}
 			Plot plotOffset = new Plot("Drift correction results of " + impSrc.getTitle(), "Photon energy (eV)",
 					"Pixels");
 			plotOffset.setColor(colorOffsetX, colorOffsetX);

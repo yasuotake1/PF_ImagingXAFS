@@ -17,7 +17,6 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.WaitForUserDialog;
-import ij.io.OpenDialog;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.PlugIn;
 
@@ -134,13 +133,16 @@ public class BatchJob_Orca implements PlugIn {
 		Roi[] driftRois = new Roi[rep];
 		double driftSigma = 1.0;
 		boolean driftEdge = false;
+		int driftOpt = 0;
 		int driftMode = 0;
 		if (driftCorr) {
 			gd = new GenericDialog("Drift correction");
 			gd.addFileField("Drift correction ROIs", "");
-			gd.addCheckbox("Use ROI for calculation", false);
+			gd.addCheckbox("Use ROI for calculation", true);
 			gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
 			gd.addCheckbox("Edge detection", false);
+			gd.addChoice("Optimization", ImagingXAFSDriftCorrection.optimization,
+					ImagingXAFSDriftCorrection.optimization[0]);
 			gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
 					ImagingXAFSDriftCorrection.calculationMode[0]);
 			gd.showDialog();
@@ -149,6 +151,7 @@ public class BatchJob_Orca implements PlugIn {
 			String pathDriftRois = gd.getNextString();
 			driftSigma = gd.getNextNumber();
 			driftEdge = gd.getNextBoolean();
+			driftOpt = gd.getNextChoiceIndex();
 			driftMode = gd.getNextChoiceIndex();
 			try {
 				List<String> strDriftRois = Files.readAllLines(Paths.get(pathDriftRois));
@@ -227,7 +230,8 @@ public class BatchJob_Orca implements PlugIn {
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
 			if (driftCorr && driftRois[i] != null) {
-				impCorr = udc.GetCorrectedStack(impCrop, driftSigma, driftEdge, driftRois[i], driftMode, true, true);
+				impCorr = udc.GetCorrectedStack(impCrop, driftOpt, driftMode, driftSigma, driftEdge, driftRois[i],
+						true);
 				impCorr.setTitle(impCrop.getTitle());
 				impCrop.close();
 			} else {
