@@ -66,13 +66,14 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 		double[] oy = new double[slc];
 		ImagePlus imp1, imp2;
 
+		IJ.showStatus("Caluculating drift...");
 		switch (optimization) {
 		case 0:// Drift correction using TurboReg
 			String nameSrc = "sourceTurboReg.tif";
 			String nameTgt = "targetTurboReg.tif";
 			FileSaver fsSrc, fsTgt;
-			String pathSrc=IJ.getDirectory("temp")+nameSrc;
-			String pathTgt=IJ.getDirectory("temp")+nameTgt;
+			String pathSrc = IJ.getDirectory("temp") + nameSrc;
+			String pathTgt = IJ.getDirectory("temp") + nameTgt;
 			int widS = stackSrc.getWidth();
 			int heiS = stackSrc.getHeight();
 			String option = "-align";
@@ -87,12 +88,12 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 				switch (mode) {
 				case 0:// Align all images to highest energy
 					imp1 = new ImagePlus(nameTgt, stackSrc.getProcessor(slc).duplicate());
-					fsTgt=new FileSaver(imp1);
+					fsTgt = new FileSaver(imp1);
 					fsTgt.saveAsTiff(pathTgt);
 					for (int i = 1; i < slc; i++) {
-						IJ.showStatus("Caluculating drift " + i + "/" + slc);
+						IJ.showProgress(i, slc);
 						imp2 = new ImagePlus(nameSrc, stackSrc.getProcessor(i).duplicate());
-						fsSrc=new FileSaver(imp2);
+						fsSrc = new FileSaver(imp2);
 						fsSrc.saveAsTiff(pathSrc);
 						turboreg = IJ.runPlugIn("TurboReg_", option);
 						method = turboreg.getClass().getMethod("getSourcePoints", (Class[]) null);
@@ -105,12 +106,12 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 					break;
 				case 1:// Align each to following image
 					for (int i = slc - 1; i > 0; i--) {
-						IJ.showStatus("Caluculating drift " + (slc - i) + "/" + slc);
+						IJ.showProgress(slc - i, slc);
 						imp1 = new ImagePlus(nameTgt, stackSrc.getProcessor(i + 1).duplicate());
-						fsTgt=new FileSaver(imp1);
+						fsTgt = new FileSaver(imp1);
 						fsTgt.saveAsTiff(pathTgt);
 						imp2 = new ImagePlus(nameSrc, stackSrc.getProcessor(i).duplicate());
-						fsSrc=new FileSaver(imp2);
+						fsSrc = new FileSaver(imp2);
 						fsSrc.saveAsTiff(pathSrc);
 						turboreg = IJ.runPlugIn("TurboReg_", option);
 						method = turboreg.getClass().getMethod("getSourcePoints", (Class[]) null);
@@ -150,7 +151,7 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 			case 0:// Align all images to highest energy
 				imp1 = new ImagePlus(labels[slc - 1], stackSrc.getProcessor(slc).duplicate());
 				for (int i = 1; i < slc; i++) {
-					IJ.showStatus("Caluculating drift " + i + "/" + slc);
+					IJ.showProgress(i, slc);
 					imp2 = new ImagePlus(labels[i - 1], stackSrc.getProcessor(i).duplicate());
 					result = PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, null, null, 1, 1, params);
 					pc[i - 1] = result.getPhaseCorrelation();
@@ -161,7 +162,7 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 				break;
 			case 1:// Align each to following image
 				for (int i = slc - 1; i > 0; i--) {
-					IJ.showStatus("Caluculating drift " + (slc - i) + "/" + slc);
+					IJ.showProgress(slc - i, slc);
 					imp1 = new ImagePlus(labels[i], stackSrc.getProcessor(i + 1).duplicate());
 					imp2 = new ImagePlus(labels[i - 1], stackSrc.getProcessor(i).duplicate());
 					result = PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, null, null, 1, 1, params);
@@ -185,6 +186,7 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 			return null;
 		}
 
+		IJ.showStatus("Applying drift correction...");
 		ImagePlus impResult = imp.duplicate();
 		FileInfo fi = imp.getOriginalFileInfo();
 		String title = imp.getTitle().endsWith(".tif") ? imp.getTitle().replace(".tif", "_corr.tif")
@@ -192,7 +194,7 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 		fi.fileName = title;
 		ImageProcessor ip;
 		for (int i = 0; i < slc; i++) {
-			IJ.showStatus("Applying drift correction " + i + "/" + slc);
+			IJ.showProgress(i, slc);
 			ip = impResult.getStack().getProcessor(i + 1);
 			ip.setInterpolationMethod(ImageProcessor.BILINEAR);
 			ip.translate(ox[i], oy[i]);
