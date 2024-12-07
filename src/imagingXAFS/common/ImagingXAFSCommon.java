@@ -135,16 +135,21 @@ public class ImagingXAFSCommon implements PlugIn {
 					setSpacCrystal(lines.get(0));
 					lines.remove(0);
 				} while (!(lines.get(0)).trim().startsWith("Offset"));
-				values = new double[lines.size() - 1];
+				lines.remove(0);
+				values = new double[lines.size()];
 				for (int i = 0; i < values.length; i++) {
-					values[i] = Double.parseDouble((lines.get(i + 1)).substring(column * 10, column * 10 + 10).trim());
+					values[i] = Double.parseDouble((lines.get(i)).substring(column * 10, column * 10 + 10).trim());
+				}
+			} else if (path.endsWith(".nor")) {
+				lines = lines.stream().filter(s -> !s.startsWith("#")).map(s -> s.trim()).collect(Collectors.toList());
+				values = new double[lines.size()];
+				for (int i = 0; i < lines.size(); i++) {
+					values[i] = Double.parseDouble(lines.get(i).split("[,\\s]+")[column]);
 				}
 			} else {
 				values = new double[lines.size() - 1];
-				String[] arrSplit;
 				for (int i = 0; i < values.length; i++) {
-					arrSplit = lines.get(i + 1).split("[,\\s]+");
-					values[i] = Double.parseDouble(arrSplit[column]);
+					values[i] = Double.parseDouble(lines.get(i + 1).split("[,\\s]+")[column]);
 				}
 			}
 			if (applyAtoEfor9809 && is9809) {
@@ -153,7 +158,7 @@ public class ImagingXAFSCommon implements PlugIn {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
+			IJ.error(e.getMessage());
 			return null;
 		}
 		return values;
@@ -248,6 +253,37 @@ public class ImagingXAFSCommon implements PlugIn {
 	 */
 	public static boolean doInterp(double idx) {
 		return Math.abs(idx - Math.round(idx)) > THRESHOLD_INTERP;
+	}
+
+	/**
+	 * Loads a standard spectrum from strPath and returns an array of intensities by
+	 * interpolating the spectrum according to energies.
+	 * 
+	 * @param strPath
+	 * @param energies
+	 * @return
+	 */
+	public static double[] getInterpolatedSpectrum(String strPath, double[] energies) {
+		double[] arrEne = readEnergies(strPath);
+		double[] arrInt = readIntensities(strPath, strPath.endsWith(".nor") ? 3 : 1);
+		if (arrEne == null || arrInt == null) {
+			IJ.error("Failed to load " + Paths.get(strPath).getFileName().toString() + ".");
+			return null;
+		}
+
+		double[] arrIntInterp = new double[energies.length];
+		double interpIdx;
+		double ratio;
+		for (int i = 0; i < arrIntInterp.length; i++) {
+			interpIdx = getInterpIndex(energies[i], arrEne);
+			if (doInterp(interpIdx)) {
+				ratio = interpIdx - Math.floor(interpIdx);
+				arrIntInterp[i] = arrInt[(int) interpIdx] * (1.0 - ratio) + arrInt[(int) interpIdx + 1] * ratio;
+			} else {
+				arrIntInterp[i] = arrInt[(int) (interpIdx + 0.5)];
+			}
+		}
+		return arrIntInterp;
 	}
 
 	/**

@@ -238,6 +238,16 @@ public class ImagingXAFSPlot implements PlugIn {
 		coefs.clear();
 	}
 
+	public static int getNumPlots() {
+		return plot.getNumPlotObjects();
+	}
+
+	public static float[][] getSpectrum(int i) {
+		if (i < 0 || i >= getNumPlots())
+			return null;
+		return plot.getDataObjectArrays(i);
+	}
+
 	@SuppressWarnings("serial")
 	static class ImagingXAFSPlotWindow extends PlotWindow implements ItemListener {
 		private static Choice choice;

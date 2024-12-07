@@ -1,7 +1,4 @@
-package imagingXAFS.nw2a_ultra;
-
-import imagingXAFS.common.ImagingXAFSCommon;
-import imagingXAFS.common.ImagingXAFSDriftCorrection;
+package imagingXAFS.common;
 
 import java.awt.Color;
 
@@ -13,7 +10,7 @@ import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.plugin.PlugIn;
 
-public class UltraDriftCorrection_Menu implements PlugIn {
+public class ImagingXAFSDriftCorrection_Menu implements PlugIn {
 
 	static final String styleData = "connected circle";
 	static final Color colorPhaseCorr = new Color(0x8b0000);

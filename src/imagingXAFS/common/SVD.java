@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -125,7 +124,7 @@ public class SVD implements PlugIn {
 		double[] arrInt;
 		RealMatrix Mtemp = MatrixUtils.createRealMatrix(energies.length, num);
 		for (int i = 0; i < num; i++) {
-			arrInt = getInterpolatedSpectrum(fileList[i], energies);
+			arrInt = ImagingXAFSCommon.getInterpolatedSpectrum(fileList[i], energies);
 			if (arrInt == null)
 				return false;
 			Mtemp.setColumn(i, arrInt);
@@ -264,52 +263,6 @@ public class SVD implements PlugIn {
 			arrDouble[i] = (double) arrFloat[i];
 		}
 		return arrDouble;
-	}
-
-	private static double[] getInterpolatedSpectrum(String strPath, double[] energies) {
-		double[] arrEne = { 0 };
-		double[] arrInt = { 0 };
-		try {
-			List<String> lines = ImagingXAFSCommon.linesFromFile(strPath);
-			int columnInt = 1;
-			if (strPath.endsWith(".nor")) {
-				columnInt = 3;// Use 'flat' in case of Athena .nor file.
-				lines = lines.stream().filter(s -> !s.startsWith("#")).map(s -> s.trim()).collect(Collectors.toList());
-			} else {
-				lines.remove(0);
-			}
-			arrEne = new double[lines.size()];
-			arrInt = new double[lines.size()];
-			String[] values;
-			for (int i = 0; i < lines.size(); i++) {
-				values = lines.get(i).split("[,\\s]+");
-				arrEne[i] = Double.parseDouble(values[0]);
-				arrInt[i] = Double.parseDouble(values[columnInt]);
-			}
-			if ((arrEne[0] - 0.01) > energies[0]
-					|| (arrEne[arrEne.length - 1] + 0.01) < energies[energies.length - 1]) {
-				throw new Exception("Insufficient energy range.");
-			}
-		} catch (Exception e) {
-			IJ.error("Failed to load " + Paths.get(strPath).getFileName().toString() + ".");
-			IJ.log(e.getMessage());
-			return null;
-		}
-
-		double[] arrIntInterp = new double[energies.length];
-		double interpIdx;
-		double ratio;
-		for (int i = 0; i < arrIntInterp.length; i++) {
-			interpIdx = ImagingXAFSCommon.getInterpIndex(energies[i], arrEne);
-			if (ImagingXAFSCommon.doInterp(interpIdx)) {
-				ratio = interpIdx - Math.floor(interpIdx);
-				arrIntInterp[i] = arrInt[(int) interpIdx] * (1.0 - ratio) + arrInt[(int) interpIdx + 1] * ratio;
-			} else {
-				arrIntInterp[i] = arrInt[(int) (interpIdx + 0.5)];
-			}
-		}
-		return arrIntInterp;
-
 	}
 
 	private static float getRms(double[] arr) {
