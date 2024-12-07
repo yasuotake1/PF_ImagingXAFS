@@ -30,7 +30,7 @@ public class OrcaCommon implements PlugIn {
 	public static int bitDepth = 16;
 
 	public static String PropPath = "plugins/PF_ImagingXAFS/OrcaProps.config";
-	public static final String[] arrBinning = { "1", "2", "4", "8" };
+	public static final String[] LIST_BINNING = { "1", "2", "4", "8" };
 	static String strImg = "";
 	static String strRef = "";
 	static String strDark = "100";
@@ -39,7 +39,7 @@ public class OrcaCommon implements PlugIn {
 	private static ImagePlus impDark;
 	private static int constDark = 0;
 	static boolean avoidZero = false;
-	static String strBinning = arrBinning[0];
+	static String strBinning = LIST_BINNING[0];
 	static double ofsEne = 0.0;
 
 	public void run(String arg) {

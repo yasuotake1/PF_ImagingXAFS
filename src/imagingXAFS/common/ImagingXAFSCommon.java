@@ -20,19 +20,19 @@ import ij.plugin.PlugIn;
 
 public class ImagingXAFSCommon implements PlugIn {
 
-	public static final double hc = 12398.52;
-	public static final double spacSi111 = 3.13551;
-	public static final double spacSi220 = 1.92010;
-	public static final double spacSi311 = 1.63747;
-	public static final double spacSi511 = 1.04517;
-	static double spacCrystal = spacSi111;
-	public static final String keyEnergy = "Energies";
-	public static final double thresInterp = 0.005;
+	public static final double HC = 12398.52;
+	public static final double SPAC_SI111 = 3.13551;
+	public static final double SPAC_SI220 = 1.92010;
+	public static final double SPAC_SI311 = 1.63747;
+	public static final double SPAC_SI511 = 1.04517;
+	static double spacCrystal = SPAC_SI111;
+	public static final String KEYENERGY = "Energies";
+	public static final double THRESHOLD_INTERP = 0.005;
 	public static double[] normalizationParam = { 7015.0, 7095.0, 7140.0, 7310.0 };
 	public static float e0Jump = 0.5F;
 	public static double e0Min = 7116.0;
 	public static double e0Max = 7124.0;
-	public static final Color[] listPlotColors = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00),
+	public static final Color[] LIST_PLOTCOLORS = { new Color(0x8b0000), new Color(0x8b8b00), new Color(0x008b00),
 			new Color(0x008b8b), new Color(0x00008b), new Color(0x8b008b), Color.DARK_GRAY, Color.BLACK };
 	private static final Pattern p1 = Pattern.compile(".*D\\=\\s+([0-9\\.]+)\\s+A.*");
 	private static final Pattern p2 = Pattern.compile("\\s*Mono :\\s+([a-zA-Z0-9\\(\\)]+)\\s+.*");
@@ -55,7 +55,7 @@ public class ImagingXAFSCommon implements PlugIn {
 
 		double[] energies;
 		try {
-			String[] tempEnergies = imp.getProp(keyEnergy).split(",", 9999);
+			String[] tempEnergies = imp.getProp(KEYENERGY).split(",", 9999);
 			energies = new double[tempEnergies.length];
 			for (int i = 0; i < energies.length; i++) {
 				energies[i] = Double.parseDouble(tempEnergies[i]);
@@ -81,7 +81,7 @@ public class ImagingXAFSCommon implements PlugIn {
 		for (int i = 0; i < temp_energies.length; i++) {
 			temp_energies[i] = String.format("%.2f", energies[i]);
 		}
-		imp.setProp(keyEnergy, String.join(",", temp_energies));
+		imp.setProp(KEYENERGY, String.join(",", temp_energies));
 	}
 
 	/**
@@ -181,16 +181,16 @@ public class ImagingXAFSCommon implements PlugIn {
 			if (m2.matches()) {
 				switch (m2.group(1)) {
 				case "Si(111)":
-					spacCrystal = spacSi111;
+					spacCrystal = SPAC_SI111;
 					return true;
 				case "Si(220)":
-					spacCrystal = spacSi220;
+					spacCrystal = SPAC_SI220;
 					return true;
 				case "Si(311)":
-					spacCrystal = spacSi311;
+					spacCrystal = SPAC_SI311;
 					return true;
 				case "Si(511)":
-					spacCrystal = spacSi511;
+					spacCrystal = SPAC_SI511;
 					return true;
 				}
 			}
@@ -205,7 +205,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 * @return Photon energy in eV
 	 */
 	public static double AtoE(double angle) {
-		return hc / (2 * spacCrystal * Math.sin(angle / 180 * Math.PI));
+		return HC / (2 * spacCrystal * Math.sin(angle / 180 * Math.PI));
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 * @return DCM angle in degree
 	 */
 	public static double EtoA(double ene) {
-		return Math.asin(hc / (2 * spacCrystal * ene)) / Math.PI * 180;
+		return Math.asin(HC / (2 * spacCrystal * ene)) / Math.PI * 180;
 	}
 
 	/**
@@ -247,7 +247,7 @@ public class ImagingXAFSCommon implements PlugIn {
 	 * @return
 	 */
 	public static boolean doInterp(double idx) {
-		return Math.abs(idx - Math.round(idx)) > thresInterp;
+		return Math.abs(idx - Math.round(idx)) > THRESHOLD_INTERP;
 	}
 
 	/**

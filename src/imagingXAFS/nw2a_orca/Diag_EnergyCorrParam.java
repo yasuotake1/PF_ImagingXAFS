@@ -53,7 +53,7 @@ public class Diag_EnergyCorrParam implements PlugIn {
 			return;
 		OrcaCommon.setDark(strDark);
 		OrcaCommon.avoidZero = gd.getNextBoolean();
-		OrcaCommon.strBinning = OrcaCommon.arrBinning[0];
+		OrcaCommon.strBinning = OrcaCommon.LIST_BINNING[0];
 		OrcaCommon.ofsEne = 0d;
 		boolean i0Corr = gd.getNextBoolean();
 		double preStart = gd.getNextNumber();

@@ -11,7 +11,7 @@ import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 
 public class Stitching_PlotTilePositions implements PlugIn {
-	Color c = ImagingXAFSCommon.listPlotColors[0];
+	Color c = ImagingXAFSCommon.LIST_PLOTCOLORS[0];
 
 	public void run(String arg) {
 		OpenDialog od = new OpenDialog("Plot tile positions");

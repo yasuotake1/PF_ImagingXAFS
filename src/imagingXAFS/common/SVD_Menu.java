@@ -31,12 +31,12 @@ public class SVD_Menu implements PlugIn {
 		ImagePlus impDmut = WindowManager.getImage(list2dId[gd.getNextChoiceIndex()]);
 		boolean bClip = gd.getNextBoolean();
 		boolean autoSave = gd.getNextBoolean();
-		
+
 		if (!SVD.setDataMatrix(impNorm))
 			return;
-			if (!SVD.setStandards(true))
-				return;
-		SVD.doSVD(true);
+		if (!SVD.setStandards(true))
+			return;
+		SVD.performSVD(true);
 		SVD.showResults(impDmut, bClip, true, true, autoSave);
 	}
 

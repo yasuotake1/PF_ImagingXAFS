@@ -31,7 +31,7 @@ public class Load_OrcaStack implements PlugIn {
 		gd.addFileField("Reference images (9809 format) or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
-		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
+		gd.addChoice("Binning", OrcaCommon.LIST_BINNING, OrcaCommon.strBinning);
 		gd.addMessage(msg);
 		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
 		gd.addCheckbox("I0 correction", i0Corr);

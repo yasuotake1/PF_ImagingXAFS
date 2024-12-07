@@ -22,7 +22,7 @@ public class Load_SingleOrca implements PlugIn {
 		gd.addFileField("Reference image or constant", OrcaCommon.strRef);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
-		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
+		gd.addChoice("Binning", OrcaCommon.LIST_BINNING, OrcaCommon.strBinning);
 		gd.addMessage(msg);
 		gd.showDialog();
 		if (gd.wasCanceled())

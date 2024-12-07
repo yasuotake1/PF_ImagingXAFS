@@ -57,6 +57,10 @@ public class CorrelationPlotMask_Menu implements PlugIn {
 				return;
 			}
 			int idx = getIndexFromID(WindowManager.getCurrentImage().getID());
+			if (idx < 0) {
+				IJ.error("Current image is not a correlation plot.");
+				return;
+			}
 			if (arg.contains("zoom")) {
 				BL15A1Props prop = BL15A1Common.ReadProps();
 				cpms.get(idx).createMask(prop.zoom);
@@ -73,6 +77,6 @@ public class CorrelationPlotMask_Menu implements PlugIn {
 					return i;
 			}
 		}
-		return 0;
+		return -1;
 	}
 }

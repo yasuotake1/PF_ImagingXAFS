@@ -18,10 +18,10 @@ import ij.process.ImageStatistics;
 
 public class Measure_FocusFunction implements PlugIn {
 
-	static final String[] listMethod = { "StdDev", "Mean of Variance", "StdDev of Variance" };
-	static final double radius = 2.0;
-	static final String styleData = "connected circle";
-	static Color[] colors = ImagingXAFSCommon.listPlotColors;
+	public static final String[] LIST_METHOD = { "StdDev", "Mean of Variance", "StdDev of Variance" };
+	static double radius = 2.0;
+	public static final String STYLE_DATA = "connected circle";
+	static Color[] colors = ImagingXAFSCommon.LIST_PLOTCOLORS;
 
 	public void run(String arg) {
 		Integer[] listStackId = ImagingXAFSCommon.getDataIds(true);
@@ -33,7 +33,7 @@ public class Measure_FocusFunction implements PlugIn {
 
 		GenericDialog gd = new GenericDialog("Sharpness measurement");
 		gd.addChoice("Imagestack", listStackTitle, listStackTitle[0]);
-		gd.addChoice("Method", listMethod, listMethod[0]);
+		gd.addChoice("Method", LIST_METHOD, LIST_METHOD[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -45,7 +45,7 @@ public class Measure_FocusFunction implements PlugIn {
 		}
 		ImagePlus imp;
 		int method = gd.getNextChoiceIndex();
-		Plot plot = new Plot("Focus function", "Slice number", listMethod[method]);
+		Plot plot = new Plot("Focus function", "Slice number", LIST_METHOD[method]);
 
 		RoiManager roiManager = RoiManager.getInstance();
 		Roi[] rois;
@@ -63,7 +63,7 @@ public class Measure_FocusFunction implements PlugIn {
 				ic.convertToGray32();
 			}
 			plot.setColor(colors[i]);
-			plot.add(styleData, arrX, calcFocusFunction(imp.getStack(), method));
+			plot.add(STYLE_DATA, arrX, calcFocusFunction(imp.getStack(), method));
 			legend += i > 0 ? "\t" : "";
 			legend += "ROI " + (i + 1);
 		}

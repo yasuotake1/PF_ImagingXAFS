@@ -13,7 +13,7 @@ import ij.plugin.PlugIn;
 
 public class Stitching_KillBadPos implements PlugIn {
 
-	public static String[] choiceKillOp = { "Set positions to (0.0,0.0)", "Remove bad tiles" };
+	static String[] choiceKillOp = { "Set positions to (0.0,0.0)", "Remove bad tiles" };
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Complement tile positions");

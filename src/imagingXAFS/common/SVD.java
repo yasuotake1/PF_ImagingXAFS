@@ -98,27 +98,40 @@ public class SVD implements PlugIn {
 		if (showPlot)
 			IJ.log("Loading standards...");
 
-		fileNamesStd.clear();
-		double[] arrInt;
+		String[] fileList=new String[num];
 		for (int i = 0; i < num; i++) {
 			OpenDialog od = new OpenDialog("Open component " + (i + 1) + ".");
 			if (od.getPath() == null)
 				return false;
-			arrInt = getInterpolatedSpectrum(od.getPath(), energies);
-			if (arrInt == null)
-				return false;
-			if (i == 0) {
-				M = MatrixUtils.createRealMatrix(energies.length, num);
-			}
-			M.setColumn(i, arrInt);
-			fileNamesStd.add(od.getFileName());
+			fileList[i]=od.getPath();
 		}
 		OpenDialog.setLastDirectory(pathTemp);
+		setStandards(fileList);
 		if (showPlot) {
 			showStandards();
 			IJ.log("\\Update:Loading standards...loaded " + num + " spectra.");
 		}
+		return true;
+	}
 
+	public static boolean setStandards(String[] fileList, double[] energy) {
+		energies = Arrays.copyOf(energy, energy.length);
+		return setStandards(fileList);
+	}
+
+	public static boolean setStandards(String[] fileList) {
+		int num = fileList.length;
+		fileNamesStd.clear();
+		double[] arrInt;
+		RealMatrix Mtemp = MatrixUtils.createRealMatrix(energies.length, num);
+		for (int i = 0; i < num; i++) {
+			arrInt = getInterpolatedSpectrum(fileList[i], energies);
+			if (arrInt == null)
+				return false;
+			Mtemp.setColumn(i, arrInt);
+			fileNamesStd.add(Paths.get(fileList[i]).getFileName().toString());
+		}
+		M = Mtemp;
 		return true;
 	}
 
@@ -136,7 +149,7 @@ public class SVD implements PlugIn {
 		return Math.min(M.getColumnDimension(), fileNamesStd.size());
 	}
 
-	public static void doSVD(boolean showLog) {
+	public static void performSVD(boolean showLog) {
 		if (X != null)
 			X = null;
 		results.clear();

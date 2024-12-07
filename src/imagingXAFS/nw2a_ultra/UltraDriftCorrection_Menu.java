@@ -36,10 +36,10 @@ public class UltraDriftCorrection_Menu implements PlugIn {
 		gd.addNumericField("Gaussian blur sigma (radius)", 2.0, 1);
 		gd.addCheckbox("Edge detection", false);
 		gd.addMessage("Calculation:");
-		gd.addChoice("Optimization", ImagingXAFSDriftCorrection.optimization,
-				ImagingXAFSDriftCorrection.optimization[0]);
-		gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
-				ImagingXAFSDriftCorrection.calculationMode[0]);
+		gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
+				ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
+		gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.CALC_MODE,
+				ImagingXAFSDriftCorrection.CALC_MODE[0]);
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Plot results", true);
 		gd.addCheckbox("Crop", true);

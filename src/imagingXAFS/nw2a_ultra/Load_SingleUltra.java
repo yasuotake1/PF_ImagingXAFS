@@ -17,7 +17,7 @@ public class Load_SingleUltra implements PlugIn {
 		GenericDialog gd = new GenericDialog("Load single UltraXRM image");
 		gd.addFileField("Image file", "");
 		gd.addFileField("Reference image file (if exists)", "");
-		gd.addChoice("Binning", UltraCommon.strBinning, UltraCommon.strBinning[0]);
+		gd.addChoice("Binning", UltraCommon.LIST_BINNING, UltraCommon.LIST_BINNING[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -43,7 +43,7 @@ public class Load_SingleUltra implements PlugIn {
 			impTgt = impImg;
 		}
 		int intBin = 1;
-		if (strBinning != UltraCommon.strBinning[0]) {
+		if (strBinning != UltraCommon.LIST_BINNING[0]) {
 			try {
 				intBin = Integer.parseInt(strBinning);
 				impTgt = impTgt.resize(impTgt.getWidth() / intBin, impTgt.getHeight() / intBin, "average");

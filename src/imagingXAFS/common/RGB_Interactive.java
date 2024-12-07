@@ -14,10 +14,10 @@ import ij.process.ImageProcessor;
 
 public class RGB_Interactive implements PlugIn, DialogListener {
 
-	final private String[] choiceBg = { "White", "Black" };
 	Integer[] listId;
 	ImageProcessor ipR, ipRByte, ipG, ipGByte, ipB, ipBByte;
 	ImagePlus impPreview = null;
+	static String[] choiceBG = { "White", "Black" };
 	static int previewWidth = 600;
 
 	public void run(String arg) {
@@ -57,7 +57,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		gd.addChoice("Image", listTitle, listTitle[0]);
 		gd.addNumericField("Display range minimum", Double.NaN, 3);
 		gd.addNumericField("Maximum", Double.NaN, 3);
-		gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
+		gd.addRadioButtonGroup("Background", choiceBG, 1, 2, choiceBG[0]);
 		gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
 		gd.addCheckbox("Preview", false);
 		gd.addDialogListener(this);
@@ -133,7 +133,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 		nameResult += "_" + strBg + ".png";
 
 		ImagePlus impResult = new ImagePlus(nameResult, ipRByte.convertToRGB());
-		setGammaImagePixels(gamma, strBg == choiceBg[0], (int[]) impResult.getProcessor().getPixels());
+		setGammaImagePixels(gamma, strBg == choiceBG[0], (int[]) impResult.getProcessor().getPixels());
 		impResult.show();
 		IJ.log("Saving...");
 		IJ.saveAs(impResult, "png", null);
@@ -224,7 +224,7 @@ public class RGB_Interactive implements PlugIn, DialogListener {
 			ipB.setMinAndMax(minB, maxB);
 			ipBByte = ipB.convertToByte(true);
 		}
-		boolean isWhiteBg = gd.getNextRadioButton() == choiceBg[0];
+		boolean isWhiteBg = gd.getNextRadioButton() == choiceBG[0];
 		double gamma = gd.getNextNumber();
 
 		if (gd.getNextBoolean()) {

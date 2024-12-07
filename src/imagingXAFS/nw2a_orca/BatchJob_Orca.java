@@ -26,18 +26,19 @@ public class BatchJob_Orca implements PlugIn {
 	private String strRef9809Path;
 
 	public void run(String arg) {
+		boolean macroMode = arg.equalsIgnoreCase("macro");
 		GenericDialog gd = new GenericDialog("Batch job: NW2A ImagingXAFS");
 		gd.addMessage("Data source:");
 		gd.addFileField("First transmission images (9809 format)", strImg9809Path);
 		gd.addFileField("Reference images (9809 format) or constant", strRef9809Path);
 		gd.addFileField("Dark image or constant", OrcaCommon.strDark);
 		gd.addCheckbox("Avoid zero in raw images", OrcaCommon.avoidZero);
-		gd.addChoice("Binning", OrcaCommon.arrBinning, OrcaCommon.strBinning);
+		gd.addChoice("Binning", OrcaCommon.LIST_BINNING, OrcaCommon.strBinning);
 		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
 		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
 		gd.addCheckbox("Save stack files", false);
 		gd.addMessage("Preprocess:");
-		gd.addCheckbox("Drift correction (Requires specified ROI list):", false);
+		gd.addCheckbox("Drift correction (Requires specified ROI list)", false);
 		gd.addCheckbox("Apply 3D Gaussian blur", false);
 		gd.addMessage("Normalization:");
 		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
@@ -51,13 +52,27 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 8, "eV");
 		gd.addCheckbox("Create statistics images", false);
 		gd.addMessage("Singular value decomposition:");
-		gd.addCheckbox("Do SVD", true);
+		gd.addCheckbox("Perform_SVD", true);
 		gd.addCheckbox("Clip at zero", true);
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Copy files for stitching", true);
-		gd.addCheckbox("Perform grid stitching", true);
+		gd.addCheckbox("Perform_grid_stitching", true);
 		gd.addCheckbox("Complement tile positions of refinement failure", false);
 		gd.addCheckbox("Show stitched images", true);
+		if (macroMode) {
+			gd.addNumericField("Crop_x", 0, 1);
+			gd.addNumericField("Crop_y", 0, 1);
+			gd.addNumericField("Crop_width", 0, 1);
+			gd.addNumericField("Crop_height", 0, 1);
+			gd.addNumericField("Filter_sigmaX", 1.0, 1);
+			gd.addNumericField("Filter_sigmaY", 1.0, 1);
+			gd.addNumericField("Filter_sigmaZ", 1.0, 1);
+			gd.addStringField("Standard_files", "");
+			gd.addChoice("Grid_order", Stitching.CHOICEORDER, Stitching.CHOICEORDER[0]);
+			gd.addNumericField("Grid_size_X", 2, 0);
+			gd.addNumericField("Grid_size_Y", 2, 0);
+			gd.addSlider("Tile_overlap", 0, 100, 10);
+		}
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -81,6 +96,7 @@ public class BatchJob_Orca implements PlugIn {
 				energy[i] += OrcaCommon.ofsEne;
 			}
 		}
+		int rep = OrcaCommon.getRepetition(strImg9809Path);
 		double preStart = gd.getNextNumber();
 		double preEnd = gd.getNextNumber();
 		double postStart = gd.getNextNumber();
@@ -109,27 +125,44 @@ public class BatchJob_Orca implements PlugIn {
 		boolean stitch = gd.getNextBoolean();
 		boolean complement = gd.getNextBoolean();
 		boolean showStitched = gd.getNextBoolean();
+		int cropX = macroMode ? (int) gd.getNextNumber() : 0;
+		int cropY = macroMode ? (int) gd.getNextNumber() : 0;
+		int cropWidth = macroMode ? (int) gd.getNextNumber() : 0;
+		int cropHeight = macroMode ? (int) gd.getNextNumber() : 0;
+		double sigmaX = macroMode ? gd.getNextNumber() : 1.0;
+		double sigmaY = macroMode ? gd.getNextNumber() : 1.0;
+		double sigmaZ = macroMode ? gd.getNextNumber() : 7.0;
+		String standardFiles = macroMode ? gd.getNextString() : "";
+		String gridOrder = macroMode ? gd.getNextChoice() : "";
+		int gridSizeX = macroMode ? (int) gd.getNextNumber() : 0;
+		int gridSizeY = macroMode ? (int) gd.getNextNumber() : 0;
+		double tileOverlap = macroMode ? gd.getNextNumber() : 0.0;
 
-		int rep = OrcaCommon.getRepetition(strImg9809Path);
-		String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
-		String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
-		String strOption = "transmission=" + strImgPath + " reference=" + strRefPath;
-		strOption += " dark=" + strDark + (OrcaCommon.avoidZero ? " avoid" : "") + " binning=" + OrcaCommon.strBinning;
-		IJ.run("Load single ORCA image...", strOption);
-		ImagePlus impRoi = Load_SingleOrca.impTgt;
-		IJ.setTool("rect");
-		new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.").show();
-		Roi roi = impRoi.getRoi();
-		if (roi != null && roi.getType() != Roi.RECTANGLE) {
-			IJ.error("Failed to specify region to analyze.");
+		Roi roi = null;
+		if (macroMode) {
+			if (cropWidth > 0 && cropHeight > 0)
+				roi = new Roi(cropX, cropY, cropWidth, cropHeight);
+		} else {
+			String strImgPath = strImg9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
+			String strRefPath = strRef9809Path + "_" + String.format("%03d", energy.length - 1) + ".img";
+			String strOption = "transmission=" + strImgPath + " reference=" + strRefPath;
+			strOption += " dark=" + strDark + (OrcaCommon.avoidZero ? " avoid" : "") + " binning="
+					+ OrcaCommon.strBinning;
+			IJ.run("Load single ORCA image...", strOption);
+			ImagePlus impRoi = Load_SingleOrca.impTgt;
+			IJ.setTool("rect");
+			new WaitForUserDialog("Select rectangle region to analyze, then click OK.\nSelect none not to crop.")
+					.show();
+			roi = impRoi.getRoi();
+			if (roi != null && roi.getType() != Roi.RECTANGLE) {
+				IJ.error("Failed to specify region to analyze.");
+				impRoi.close();
+				return;
+			}
 			impRoi.close();
-			return;
 		}
-		int roiX = roi == null ? 0 : roi.getBounds().x;
-		int roiY = roi == null ? 0 : roi.getBounds().y;
-		int roiWidth = roi == null ? impRoi.getWidth() : roi.getBounds().width;
-		int roiHeight = roi == null ? impRoi.getHeight() : roi.getBounds().height;
-		impRoi.close();
+
+		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
 		Roi[] driftRois = new Roi[rep];
 		double driftSigma = 1.0;
 		boolean driftEdge = false;
@@ -141,10 +174,10 @@ public class BatchJob_Orca implements PlugIn {
 			gd.addCheckbox("Use ROI for calculation", true);
 			gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
 			gd.addCheckbox("Edge detection", false);
-			gd.addChoice("Optimization", ImagingXAFSDriftCorrection.optimization,
-					ImagingXAFSDriftCorrection.optimization[0]);
-			gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.calculationMode,
-					ImagingXAFSDriftCorrection.calculationMode[0]);
+			gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
+					ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
+			gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.CALC_MODE,
+					ImagingXAFSDriftCorrection.CALC_MODE[0]);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return;
@@ -169,33 +202,29 @@ public class BatchJob_Orca implements PlugIn {
 				return;
 			}
 		}
-		double xsigma = 1.0, ysigma = 1.0, zsigma = 7.0;
-		if (filter) {
+
+		if (!macroMode && filter) {
 			gd = new GenericDialog("3D Gaussian Blur");
-			gd.addNumericField("X sigma:", xsigma, 1);
-			gd.addNumericField("Y sigma:", ysigma, 1);
-			gd.addNumericField("Z sigma:", zsigma, 1);
+			gd.addNumericField("X sigma:", sigmaX, 1);
+			gd.addNumericField("Y sigma:", sigmaY, 1);
+			gd.addNumericField("Z sigma:", sigmaZ, 1);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return;
-			xsigma = gd.getNextNumber();
-			ysigma = gd.getNextNumber();
-			zsigma = gd.getNextNumber();
+			sigmaX = gd.getNextNumber();
+			sigmaY = gd.getNextNumber();
+			sigmaZ = gd.getNextNumber();
 		}
-		if (doSVD && !SVD.setStandards(false, energy))
-			return;
-		IJ.run("Close All");
-		System.gc();
 
-		ImagePlus impMut, impCrop, impCorr, impNorm, impDmut, impLast;
-		String baseName;
-		Instant startTime = Instant.now();
+		if (doSVD) {
+			if (macroMode ? !SVD.setStandards(standardFiles.split(","), energy) : !SVD.setStandards(false, energy))
+				return;
+		}
+
 		String first9809Path = strImg9809Path;
-		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
-		String dirStitch = OrcaCommon.getStrGrandParent(first9809Path) + "/" + "stitching";
+		String dirStitch = OrcaCommon.getStrGrandParent(first9809Path) + "/stitching";
 		ArrayList<String> sufList = new ArrayList<String>();
 		Stitching sti = new Stitching();
-
 		if (copy) {
 			if (!Files.exists(Paths.get(dirStitch))) {
 				try {
@@ -207,10 +236,19 @@ public class BatchJob_Orca implements PlugIn {
 			}
 		}
 		if (stitch) {
-			if (!sti.showDialog(rep))
-				return;
+			if (macroMode) {
+				sti.setWithoutDialog(gridOrder, gridSizeX, gridSizeY, tileOverlap);
+			} else {
+				if (!sti.showDialog(rep))
+					return;
+			}
 		}
 
+		IJ.run("Close All");
+		System.gc();
+		ImagePlus impMut, impCrop, impCorr, impNorm, impDmut, impLast;
+		String baseName;
+		Instant startTime = Instant.now();
 		for (int i = 0; i < rep; i++) {
 			IJ.log("Loading " + getImg9809Name() + "...");
 			Load_OrcaStack.setOptions(i0Corr, true, saveStack);
@@ -220,7 +258,7 @@ public class BatchJob_Orca implements PlugIn {
 			if (roi == null) {
 				impCrop = impMut;
 			} else {
-				IJ.makeRectangle(roiX, roiY, roiWidth, roiHeight);
+				IJ.makeRectangle(roi.getBounds().x, roi.getBounds().y, roi.getBounds().width, roi.getBounds().height);
 				impCrop = impMut.crop("stack");
 				impCrop.setFileInfo(impMut.getOriginalFileInfo());
 				ImagingXAFSCommon.setPropEnergies(impCrop, ImagingXAFSCommon.getPropEnergies(impMut));
@@ -239,7 +277,7 @@ public class BatchJob_Orca implements PlugIn {
 			}
 			if (filter) {
 				IJ.log("Applying filter...");
-				GaussianBlur3D.blur(impCorr, xsigma, ysigma, zsigma);
+				GaussianBlur3D.blur(impCorr, sigmaX, sigmaY, sigmaZ);
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCorr.show();
@@ -252,7 +290,7 @@ public class BatchJob_Orca implements PlugIn {
 			}
 			if (doSVD) {
 				SVD.setDataMatrix(impNorm);
-				SVD.doSVD(true);
+				SVD.performSVD(true);
 				SVD.showResults(impDmut, clip, false, true, true);
 			}
 

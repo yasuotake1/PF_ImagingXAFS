@@ -21,8 +21,8 @@ import mpicbg.stitching.StitchingParameters;
 
 public class ImagingXAFSDriftCorrection implements PlugIn {
 
-	public static final String[] optimization = { "Euclid distance", "Phase correlation" };
-	public static final String[] calculationMode = { "Highest-energy image", "Each following image" };
+	public static final String[] OPTIMIZATION = { "Euclid distance", "Phase correlation" };
+	public static final String[] CALC_MODE = { "Highest-energy image", "Each following image" };
 	public double[] phaseCorrelation;
 	public double[] crossCorrelation;
 	public double[] offsetX;

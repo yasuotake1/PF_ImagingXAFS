@@ -22,8 +22,8 @@ public class Load_Ultra2DXANES implements PlugIn {
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load UltraXRM 2D XANES");
 		gd.addFileField("ScanInfo file", "");
-		gd.addChoice("Binning", UltraCommon.strBinning, UltraCommon.strBinning[0]);
-		gd.addChoice("Mode", UltraCommon.loadingModes, UltraCommon.loadingModes[0]);
+		gd.addChoice("Binning", UltraCommon.LIST_BINNING, UltraCommon.LIST_BINNING[0]);
+		gd.addChoice("Mode", UltraCommon.lOADINGMODES, UltraCommon.lOADINGMODES[0]);
 		gd.addCheckbox("Save automatically", true);
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -104,8 +104,8 @@ public class Load_Ultra2DXANES implements PlugIn {
 			ImagePlus impImg, impRef, impTgt;
 			impImg = XRM_Reader.Load(si.directory + arrImg[0], false);// Load one image to read info, to skip reading
 																		// info later on.
-			String title = UltraCommon.removePattern(UltraCommon.pEnergy, impImg.getTitle());
-			title = UltraCommon.removePattern(UltraCommon.pNExp, title).replace(".xrm", ".tif");
+			String title = UltraCommon.removePattern(UltraCommon.P_ENERGY, impImg.getTitle());
+			title = UltraCommon.removePattern(UltraCommon.P_NEXP, title).replace(".xrm", ".tif");
 			Calibration calib = impImg.getCalibration();
 			FileInfo fi = impImg.getOriginalFileInfo();
 			ImageStack stack = new ImageStack(impImg.getWidth(), impImg.getHeight());
@@ -133,7 +133,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 			}
 			impStack = new ImagePlus(title, stack);
 			int intBin = 1;
-			if (strBinning != UltraCommon.strBinning[0]) {
+			if (strBinning != UltraCommon.LIST_BINNING[0]) {
 				try {
 					intBin = Integer.parseInt(strBinning);
 					impStack = impStack.resize(fi.width / intBin, fi.height / intBin, "average");
@@ -220,7 +220,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 				tgt[i] /= len;
 			}
 		}
-		ImagePlus result = new ImagePlus(UltraCommon.removePattern(UltraCommon.pNExp, imps[0].getTitle()), ip);
+		ImagePlus result = new ImagePlus(UltraCommon.removePattern(UltraCommon.P_NEXP, imps[0].getTitle()), ip);
 		result.setCalibration(imps[0].getCalibration());
 		result.setFileInfo(imps[0].getOriginalFileInfo());
 		return result;

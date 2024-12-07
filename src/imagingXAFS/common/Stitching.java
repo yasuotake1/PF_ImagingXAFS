@@ -14,7 +14,7 @@ import ij.plugin.PlugIn;
 
 public class Stitching implements PlugIn {
 
-	public static String[] choiceOrder = { "Right & Down                ", "Left & Down", "Right & Up", "Left & Up" };
+	public static final String[] CHOICEORDER = { "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
 	private String order;
 	public int sizeX;
 	public int sizeY;
@@ -32,11 +32,11 @@ public class Stitching implements PlugIn {
 
 	public boolean showDialog(int num) {
 		GenericDialog gd = new GenericDialog("Grid stitching");
-		gd.addChoice("Grid_order", choiceOrder, choiceOrder[0]);
+		gd.addChoice("Grid_order", CHOICEORDER, CHOICEORDER[0]);
 		gd.addMessage("(Grid size X) * (Grid size Y) should be " + num);
 		gd.addNumericField("Grid_size_X", 2, 0);
 		gd.addNumericField("Grid_size_Y", 2, 0);
-		gd.addSlider("Tile overlap [%]", 0, 100, 10);
+		gd.addSlider("Tile_overlap [%]", 0, 100, 10);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
@@ -46,6 +46,13 @@ public class Stitching implements PlugIn {
 		sizeY = (int) gd.getNextNumber();
 		overlap = gd.getNextNumber();
 		return true;
+	}
+
+	public void setWithoutDialog(String _order, int _sizeX, int _sizeY, double _overlap) {
+		order = _order;
+		sizeX = _sizeX;
+		sizeY = _sizeY;
+		overlap = _overlap;
 	}
 
 	public boolean register(String pathToFirstFile) {

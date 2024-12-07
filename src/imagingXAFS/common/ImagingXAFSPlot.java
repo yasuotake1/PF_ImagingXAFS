@@ -17,7 +17,7 @@ public class ImagingXAFSPlot implements PlugIn {
 	static boolean hasData = false;
 	static Plot plot = new Plot("ImagingXAFS plot", "Photon energy (eV)", "Intensity or absorption");
 	static ImagingXAFSPlotWindow window;
-	static Color[] colors = ImagingXAFSCommon.listPlotColors;
+	static Color[] colors = ImagingXAFSCommon.LIST_PLOTCOLORS;
 	static int idxColor = 0;
 	static final String styleData = "circle";
 	static final String styleFit = "line";
@@ -146,7 +146,7 @@ public class ImagingXAFSPlot implements PlugIn {
 		SVD.setDataMatrix(energies.get(0), normalized);
 		if (!SVD.setStandards(false))
 			return false;
-		SVD.doSVD(false);
+		SVD.performSVD(false);
 
 		IJ.log("Linear combination result:");
 		String log = "               ";// fifteen blanks
