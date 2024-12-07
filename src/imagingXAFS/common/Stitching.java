@@ -14,7 +14,7 @@ import ij.plugin.PlugIn;
 
 public class Stitching implements PlugIn {
 
-	public static final String[] CHOICEORDER = { "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
+	public static final String[] CHOICEORDER = { "Right & Down                ", "Left & Down", "Right & Up", "Left & Up" };
 	private String order;
 	public int sizeX;
 	public int sizeY;

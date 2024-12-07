@@ -1,0 +1,62 @@
+//=====Example of a macro running BatchJob_Orca================================
+//Call this with run("BatchJob_Orca4Macro", option);
+//
+//First transmission images (9809 format) [String full path]
+//Reference images (9809 format) or constant [String full path or int]
+//Dark image or constant [String full path or int]
+//Avoid zero in raw images [boolean]
+//Binning [String from { "1", "2", "4", "8" }]
+//Energy offset [double in eV]
+//I0 correction [boolean]
+//Save stack files [boolean]
+//
+//Drift correction (Requires specified ROI list) [boolean, always false]
+//Apply 3D Gaussian blur [boolean]
+//
+//Pre-edge from [double in eV]
+//to [double in eV]
+//Post-edge from [double in eV]
+//to [double in eV]
+//Zero-slope pre-edge [boolean]
+//Filter threshold [double]
+//Normalized absorbance at E0 [double]
+//E0 plot range minimum [double in eV]
+//maximum [double in eV]
+//Create statistics images
+//
+//Perform_SVD [boolean]
+//Clip at zero [boolean]
+//
+//Copy files for stitching [boolean]
+//Perform_grid_stitching [boolean]
+//Complement tile positions of refinement failure [boolean]
+//Show stitched images [boolean]
+//
+//Crop_x [int]
+//Crop_y [int]
+//Crop_width [int]
+//Crop_height [int]
+//Filter_sigmaX [double]
+//Filter_sigmaY [double]
+//Filter_sigmaZ [double]
+//Standard_files [String full paths separated with comma]
+//Grid_order [String from { "Right & Down                ", "Left & Down", "Right & Up", "Left & Up" }]
+//Grid_size_X [int]
+//Grid_size_Y [int]
+//Tile_overlap [double in %]
+//=============================================================================
+
+firstPath="D:/Sinter5_NHJan24_1000C_7x7/Sinter5_NHJan24_1000C_7x7_035/Sinter5_NHJan24_1000C_7x7_035";
+refPath="D:/Ref_02202359/Ref_02202359";
+option="first="+firstPath+" reference="+refPath";
+option+=" dark=200 binning=1 energy=2.5 i0";
+option+=" pre-edge=7015.00 to=7095.00 post-edge=7140.00 to_0=7310.00";
+option+=" filter=2.0 normalized=0.50 e0=7117.00 maximum=7124.00";
+option+=" create perform_svd clip copy perform_grid_stitching show";
+option+=" standard_files=";
+option+="D:/StandardsForYT_Kimura/K1_hemaL.txt";
+option+=",D:/StandardsForYT_Kimura/K1_hemaR.txt";
+option+=",D:/StandardsForYT_Kimura/K1_ACF.txt";
+option+=",D:/StandardsForYT_Kimura/Fe3O4.nor";
+option+=" grid_order=[Right & Down                ] grid_size_x=7 grid_size_y=2 tile_overlap=8";
+run("BatchJob_Orca4Macro",option);
