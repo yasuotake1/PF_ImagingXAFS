@@ -10,7 +10,7 @@
 //I0 correction [boolean]
 //Save stack files [boolean]
 //
-//Drift correction (Requires specified ROI list) [boolean, always false]
+//Drift correction (Requires specified ROI list) [boolean]
 //Apply 3D Gaussian blur [boolean]
 //
 //Pre-edge from [double in eV]
@@ -36,6 +36,12 @@
 //Crop_y [int]
 //Crop_width [int]
 //Crop_height [int]
+//Use_ROI for calculation [boolean]
+//ROI_list [String full path]
+//Gaussian blur sigma (radius) [double]
+//Edge detection [boolean]
+//Optimization [String from { "Euclid distance", "Phase correlation" }]
+//Calculate_drift_to [String from { "Highest-energy image", "Each following image" }]
 //Filter_sigmaX [double]
 //Filter_sigmaY [double]
 //Filter_sigmaZ [double]
@@ -46,17 +52,32 @@
 //Tile_overlap [double in %]
 //=============================================================================
 
-firstPath="D:/Sinter5_NHJan24_1000C_7x7/Sinter5_NHJan24_1000C_7x7_035/Sinter5_NHJan24_1000C_7x7_035";
-refPath="D:/Ref_02202359/Ref_02202359";
-option="first="+firstPath+" reference="+refPath";
-option+=" dark=200 binning=1 energy=2.5 i0";
-option+=" pre-edge=7015.00 to=7095.00 post-edge=7140.00 to_0=7310.00";
-option+=" filter=2.0 normalized=0.50 e0=7117.00 maximum=7124.00";
-option+=" create perform_svd clip copy perform_grid_stitching show";
-option+=" standard_files=";
-option+="D:/StandardsForYT_Kimura/K1_hemaL.txt";
-option+=",D:/StandardsForYT_Kimura/K1_hemaR.txt";
-option+=",D:/StandardsForYT_Kimura/K1_ACF.txt";
-option+=",D:/StandardsForYT_Kimura/Fe3O4.nor";
-option+=" grid_order=[Right & Down                ] grid_size_x=7 grid_size_y=2 tile_overlap=8";
-run("BatchJob_Orca4Macro",option);
+root="F:/NSC/20241206_NW2A/";
+arrFirst=newArray(
+"P1_A_2x9",P2_B_2x9","P3_B_2x9","P4_A_2x9","P5_A_2x9"
+,"P1_B_2x9","P2_A_2x9","P3_A_2x9","P4_B_2x9","P5_B_2x9"
+,"P1_C_2x9","P2_C_2x9","P3_C_2x9","P4_C_2x9","P5_C_2x9"
+);
+arrRef=newArray(
+"Ref_12062148","Ref_12062148","Ref_12062148","Ref_12062148","Ref_12062148"
+,"Ref_12070914","Ref_12070914","Ref_12070914","Ref_12070914","Ref_12070914"
+,"Ref_12072026","Ref_12072026","Ref_12072026","Ref_12072026","Ref_12072026"
+);
+for(i=0;i<arrFirst.length;i++){
+	firstPath=root+arrFirst[i]+"/"+arrFirst[i]+"_000/"+arrFirst[i]+"_000";
+	refPath=root+arrRef[i]+"/"+arrRef[i];
+	option="first="+firstPath+" reference="+refPath;
+	option+=" dark=200 binning=1 energy=1.87 i0 drift";
+	option+=" pre-edge=7015.00 to=7095.00 post-edge=7140.00 to_0=7310.00";
+	option+=" filter=2.0 normalized=0.50 e0=7116.00 maximum=7124.00";
+	option+=" create perform_svd clip copy perform_grid_stitching show";
+	option+=" use_roi roi_list="+root+arrFirst[i]+"/DriftCorrRois.txt";
+	option+=" gaussian=1.0 optimization=[Euclid distance] calculate_drift_to=[Highest-energy image]";
+	option+=" standard_files=";
+	option+="F:/NSC/StandardsForYT_Kimura/std/a-Fe2O3.nor";
+	option+=",F:/NSC/StandardsForYT_Kimura/std/Fe3O4.nor";
+	option+=",F:/NSC/StandardsForYT_Kimura/std/FeO.nor";
+	option+=",F:/NSC/StandardsForYT_Kimura/std/Fefoil.nor";
+	option+=" grid_order=[Left & Down] grid_size_x=2 grid_size_y=9 tile_overlap=8";
+	run("BatchJob_Orca4Macro",option);
+}

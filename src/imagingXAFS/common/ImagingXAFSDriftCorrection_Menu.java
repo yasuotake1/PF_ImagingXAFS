@@ -29,13 +29,13 @@ public class ImagingXAFSDriftCorrection_Menu implements PlugIn {
 		GenericDialog gd = new GenericDialog("Drift correction");
 		gd.addChoice("Imagestack", listStackTitle, listStackTitle[0]);
 		gd.addMessage("Preprocess:");
-		gd.addCheckbox("Use ROI for calculation", false);
+		gd.addCheckbox("Use_ROI for calculation", false);
 		gd.addNumericField("Gaussian blur sigma (radius)", 2.0, 1);
 		gd.addCheckbox("Edge detection", false);
 		gd.addMessage("Calculation:");
 		gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
 				ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
-		gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.CALC_MODE,
+		gd.addChoice("Calculate_drift_to", ImagingXAFSDriftCorrection.CALC_MODE,
 				ImagingXAFSDriftCorrection.CALC_MODE[0]);
 		gd.addMessage("Postprocess:");
 		gd.addCheckbox("Plot results", true);

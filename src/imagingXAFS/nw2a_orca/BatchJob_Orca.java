@@ -64,6 +64,14 @@ public class BatchJob_Orca implements PlugIn {
 			gd.addNumericField("Crop_y", 0, 1);
 			gd.addNumericField("Crop_width", 0, 1);
 			gd.addNumericField("Crop_height", 0, 1);
+			gd.addCheckbox("Use_ROI for calculation", true);
+			gd.addFileField("ROI_list", "");
+			gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
+			gd.addCheckbox("Edge detection", false);
+			gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
+					ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
+			gd.addChoice("Calculate_drift_to", ImagingXAFSDriftCorrection.CALC_MODE,
+					ImagingXAFSDriftCorrection.CALC_MODE[0]);
 			gd.addNumericField("Filter_sigmaX", 1.0, 1);
 			gd.addNumericField("Filter_sigmaY", 1.0, 1);
 			gd.addNumericField("Filter_sigmaZ", 1.0, 1);
@@ -129,6 +137,12 @@ public class BatchJob_Orca implements PlugIn {
 		int cropY = macroMode ? (int) gd.getNextNumber() : 0;
 		int cropWidth = macroMode ? (int) gd.getNextNumber() : 0;
 		int cropHeight = macroMode ? (int) gd.getNextNumber() : 0;
+		boolean useRoi = macroMode ? gd.getNextBoolean() : false;
+		String pathRoiList = macroMode ? gd.getNextString() : "";
+		double sigmaDrift = macroMode ? gd.getNextNumber() : 1.0;
+		boolean edge = macroMode ? gd.getNextBoolean() : false;
+		int driftOpt = macroMode ? gd.getNextChoiceIndex() : 0;
+		int driftMode = macroMode ? gd.getNextChoiceIndex() : 0;
 		double sigmaX = macroMode ? gd.getNextNumber() : 1.0;
 		double sigmaY = macroMode ? gd.getNextNumber() : 1.0;
 		double sigmaZ = macroMode ? gd.getNextNumber() : 7.0;
@@ -164,42 +178,44 @@ public class BatchJob_Orca implements PlugIn {
 
 		ImagingXAFSDriftCorrection udc = new ImagingXAFSDriftCorrection();
 		Roi[] driftRois = new Roi[rep];
-		double driftSigma = 1.0;
-		boolean driftEdge = false;
-		int driftOpt = 0;
-		int driftMode = 0;
 		if (driftCorr) {
-			gd = new GenericDialog("Drift correction");
-			gd.addFileField("Drift correction ROIs", "");
-			gd.addCheckbox("Use ROI for calculation", true);
-			gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
-			gd.addCheckbox("Edge detection", false);
-			gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
-					ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
-			gd.addChoice("Calculate drift to", ImagingXAFSDriftCorrection.CALC_MODE,
-					ImagingXAFSDriftCorrection.CALC_MODE[0]);
-			gd.showDialog();
-			if (gd.wasCanceled())
-				return;
-			String pathDriftRois = gd.getNextString();
-			driftSigma = gd.getNextNumber();
-			driftEdge = gd.getNextBoolean();
-			driftOpt = gd.getNextChoiceIndex();
-			driftMode = gd.getNextChoiceIndex();
-			try {
-				List<String> strDriftRois = Files.readAllLines(Paths.get(pathDriftRois));
-				int tmpX, tmpY, tmpW, tmpH;
-				for (int i = 0; i < rep; i++) {
-					String[] bounds = strDriftRois.get(i).split(",");
-					tmpX = Integer.parseInt(bounds[0]);
-					tmpY = Integer.parseInt(bounds[1]);
-					tmpW = Integer.parseInt(bounds[2]);
-					tmpH = Integer.parseInt(bounds[3]);
-					driftRois[i] = (tmpW == 0 || tmpH == 0) ? null : new Roi(tmpX, tmpY, tmpW, tmpH);
+			if (!macroMode) {
+				gd = new GenericDialog("Drift correction");
+				gd.addCheckbox("Use_ROI for calculation", true);
+				gd.addFileField("ROI_list", "");
+				gd.addNumericField("Gaussian blur sigma (radius)", 1.0, 1);
+				gd.addCheckbox("Edge detection", false);
+				gd.addChoice("Optimization", ImagingXAFSDriftCorrection.OPTIMIZATION,
+						ImagingXAFSDriftCorrection.OPTIMIZATION[0]);
+				gd.addChoice("Calculate_drift_to", ImagingXAFSDriftCorrection.CALC_MODE,
+						ImagingXAFSDriftCorrection.CALC_MODE[0]);
+				gd.showDialog();
+				if (gd.wasCanceled())
+					return;
+				useRoi = gd.getNextBoolean();
+				pathRoiList = gd.getNextString();
+				sigmaDrift = gd.getNextNumber();
+				edge = gd.getNextBoolean();
+				driftOpt = gd.getNextChoiceIndex();
+				driftMode = gd.getNextChoiceIndex();
+			}
+			if (useRoi) {
+				try {
+					List<String> strDriftRois = Files.readAllLines(Paths.get(pathRoiList));
+					int tmpX, tmpY, tmpW, tmpH;
+					for (int i = 0; i < rep; i++) {
+						String[] bounds = strDriftRois.get(i).split(",");
+						tmpX = Integer.parseInt(bounds[0]);
+						tmpY = Integer.parseInt(bounds[1]);
+						tmpW = Integer.parseInt(bounds[2]);
+						tmpH = Integer.parseInt(bounds[3]);
+						driftRois[i] = (tmpW == 0 || tmpH == 0) ? null : new Roi(tmpX, tmpY, tmpW, tmpH);
+					}
+				} catch (Exception ex) {
+					IJ.log("Failed to read drift correction ROIs.");
+					IJ.log(ex.getMessage());
+					return;
 				}
-			} catch (Exception ex) {
-				IJ.log("Failed to read drift correction ROIs.");
-				return;
 			}
 		}
 
@@ -267,9 +283,8 @@ public class BatchJob_Orca implements PlugIn {
 			impCrop.setTitle(baseName);
 			impCrop.show();
 			IJ.log("\\Update:Loading " + getImg9809Name() + "...done.");
-			if (driftCorr && driftRois[i] != null) {
-				impCorr = udc.GetCorrectedStack(impCrop, driftOpt, driftMode, driftSigma, driftEdge, driftRois[i],
-						true);
+			if (driftCorr && !(useRoi && driftRois[i] == null)) {
+				impCorr = udc.GetCorrectedStack(impCrop, driftOpt, driftMode, sigmaDrift, edge, driftRois[i], true);
 				impCorr.setTitle(impCrop.getTitle());
 				impCrop.close();
 			} else {
