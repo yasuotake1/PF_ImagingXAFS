@@ -39,8 +39,13 @@ public class BatchJob_DriftCorrRois implements PlugIn {
 			IJ.run("Load single ORCA image...", strOption);
 			ImagePlus impRoi = Load_SingleOrca.impTgt;
 			IJ.setTool("rect");
-			new WaitForUserDialog("Select rectangle region for drift correction, then click OK.\nSelect none to skip.")
-					.show();
+			WaitForUserDialog wd = new WaitForUserDialog(
+					"Select rectangle region for drift correction, then click OK.\nSelect none to skip.");
+			wd.show();
+			if (wd.escPressed()) {
+				impRoi.close();
+				return;				
+			}
 			Roi roi = impRoi.getRoi();
 			if (roi != null && roi.getType() != Roi.RECTANGLE) {
 				IJ.error("Failed to specify region for drift correction.");
@@ -59,7 +64,7 @@ public class BatchJob_DriftCorrRois implements PlugIn {
 				Paths.get(OrcaCommon.getStrGrandParent(strImg9809Path)).toString(), "DriftCorrRois", ".txt");
 		if (sd.getFileName() == null)
 			return;
-		try (FileWriter fw = new FileWriter(sd.getDirectory()+sd.getFileName())) {
+		try (FileWriter fw = new FileWriter(sd.getDirectory() + sd.getFileName())) {
 			fw.write(content);
 		} catch (Exception ex) {
 			IJ.log("Failed to write ROIs.");
