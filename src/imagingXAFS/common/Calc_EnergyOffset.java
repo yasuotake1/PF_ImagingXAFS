@@ -1,6 +1,7 @@
 package imagingXAFS.common;
 
 import java.awt.Color;
+import java.util.Arrays;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -8,8 +9,11 @@ import ij.gui.Plot;
 import ij.plugin.PlugIn;
 
 public class Calc_EnergyOffset implements PlugIn {
-	static String style = "line";
-	static Color color = ImagingXAFSCommon.LIST_PLOTCOLORS[0];
+	static String styleSimilarity = "line";
+	static String styleSrc = "circle";
+	static String styleTgt = "line";
+	static Color cSimilarity = ImagingXAFSCommon.LIST_PLOTCOLORS[4];
+	static Color cSpectrum = ImagingXAFSCommon.LIST_PLOTCOLORS[0];
 
 	public void run(String arg) {
 		if (ImagingXAFSPlot.getNumPlots() != 1) {
@@ -67,11 +71,27 @@ public class Calc_EnergyOffset implements PlugIn {
 				max = distances[i];
 			}
 		}
-		Plot p = new Plot("Energy offset", "Energy offset (eV)", "Cosine similarity");
-		p.setColor(color);
-		p.add(style, offsets, distances);
-		p.addLabel(((double) idx) / offsets.length, 0.5, String.format("Offset = %.3f eV", offsets[idx]));
-		p.show();
+		Plot pSimilarity = new Plot("Energy offset", "Energy offset (eV)", "Cosine similarity");
+		pSimilarity.setColor(cSimilarity);
+		pSimilarity.add(styleSimilarity, offsets, distances);
+		pSimilarity.addLabel(((double) idx) / offsets.length, 0.5, String.format("Offset = %.3f eV", offsets[idx]));
+		pSimilarity.show();
+		Plot pSpectrum = new Plot("Optimized energy offset", "Photon energy (eV)", "Intensity");
+		for (int i = 0; i < eSrcOfs.length; i++) {
+			eSrcOfs[i] = eSrc[i] + offsets[idx];
+		}
+		int first = 0;
+		int last = 0;
+		for (int i = 0; i < eTgt.length; i++) {
+			if (eTgt[i] < eSrcOfs[0])
+				first = i;
+			else if (eTgt[i] < eSrcOfs[eSrcOfs.length - 1])
+				last = i;
+		}
+		pSpectrum.setColor(cSpectrum);
+		pSpectrum.add(styleSrc, eSrcOfs, iSrc);
+		pSpectrum.add(styleTgt, Arrays.copyOfRange(eTgt, first, last), Arrays.copyOfRange(iTgt, first, last));
+		pSpectrum.show();
 	}
 
 	private double cosineDistance(double[] A, double[] B) {
