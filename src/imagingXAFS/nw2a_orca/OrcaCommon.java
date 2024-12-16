@@ -180,8 +180,13 @@ public class OrcaCommon implements PlugIn {
 	 */
 	public static byte[] readBytes(String strPath, int offset, int length) throws IOException {
 		try (FileInputStream fis = new FileInputStream(strPath)) {
-			byte[] buffer = new byte[length];
-			fis.read(buffer, offset, length);
+			byte[] buffer;
+			if (offset > 0) {
+				buffer = new byte[offset];
+				fis.read(buffer, 0, offset);
+			}
+			buffer = new byte[length];
+			fis.read(buffer, 0, length);
 			return buffer;
 		} catch (IOException ex) {
 			throw ex;
