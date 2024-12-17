@@ -8,6 +8,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import imagingXAFS.common.ImagingXAFSCommon;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
@@ -188,7 +189,7 @@ public class XRM_Reader implements PlugIn {
 
 			return imp;
 		} catch (Exception e) {
-			IJ.log(e.getMessage());
+			ImagingXAFSCommon.logStackTrace(e);
 			return null;
 		}
 	}

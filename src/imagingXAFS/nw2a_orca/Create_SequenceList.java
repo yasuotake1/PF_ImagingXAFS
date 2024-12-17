@@ -26,7 +26,7 @@ public class Create_SequenceList implements PlugIn {
 		try (BufferedReader br = new BufferedReader(new FileReader(new File(pathFirst)))) {
 			line = br.readLine();
 		} catch (Exception e) {
-			IJ.error(e.getMessage());
+			ImagingXAFSCommon.logStackTrace(e);
 			return;
 		}
 		if (!line.trim().startsWith("9809")) {

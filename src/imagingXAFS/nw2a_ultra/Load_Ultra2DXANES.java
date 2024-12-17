@@ -153,11 +153,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 			}
 			impStack.show();
 		} catch (Exception e) {
-			IJ.log(e.getClass().getName() + ": " + e.getMessage());
-			StackTraceElement[] element = e.getStackTrace();
-			for (int i = 0; i < element.length; i++) {
-				IJ.log(element[i].toString());
-			}
+			ImagingXAFSCommon.logStackTrace(e);
 			return;
 		}
 	}

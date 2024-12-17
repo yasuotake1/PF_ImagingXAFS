@@ -212,8 +212,7 @@ public class BatchJob_Orca implements PlugIn {
 						driftRois[i] = (tmpW == 0 || tmpH == 0) ? null : new Roi(tmpX, tmpY, tmpW, tmpH);
 					}
 				} catch (Exception ex) {
-					IJ.log("Failed to read drift correction ROIs.");
-					IJ.log(ex.getMessage());
+					ImagingXAFSCommon.logStackTrace(ex);
 					return;
 				}
 			}

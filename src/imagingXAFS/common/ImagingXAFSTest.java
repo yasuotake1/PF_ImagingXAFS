@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import java.lang.reflect.Method;
 
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -42,7 +43,12 @@ import imagingXAFS.nw2a_ultra.*;
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-
+		try {
+			String[] arr = new String[5];
+			IJ.log(arr[10]);
+		}catch(Exception e) {
+			ImagingXAFSCommon.logStackTrace(e);
+		}
 	}
 
 }

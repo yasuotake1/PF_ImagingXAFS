@@ -357,9 +357,9 @@ public class OrcaCommon implements PlugIn {
 	public static String getNextName(String name) {
 		try {
 			int idx = Integer.parseInt(name.substring(name.length() - 3));
-			return OrcaCommon.removeTrailingIdx(name) + String.format("%03d", idx + 1);
+			return removeTrailingIdx(name) + String.format("%03d", idx + 1);
 		} catch (NumberFormatException | IndexOutOfBoundsException ex) {
-			return OrcaCommon.removeTrailingIdx(name);
+			return removeTrailingIdx(name);
 		}
 	}
 

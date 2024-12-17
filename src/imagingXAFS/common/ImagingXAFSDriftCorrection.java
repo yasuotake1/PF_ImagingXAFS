@@ -126,8 +126,7 @@ public class ImagingXAFSDriftCorrection implements PlugIn {
 					return null;
 				}
 			} catch (Exception e) {
-				IJ.log("An error occurred when running TurboReg.");
-				IJ.log(e.getMessage());
+				ImagingXAFSCommon.logStackTrace(e);
 			}
 			ox[slc - 1] = oy[slc - 1] = 0.0;
 			offsetX = ox;

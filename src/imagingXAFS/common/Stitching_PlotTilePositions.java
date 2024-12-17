@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import ij.IJ;
 import ij.gui.Plot;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
@@ -51,7 +52,7 @@ public class Stitching_PlotTilePositions implements PlugIn {
 				plt.setLimits(arrLimits[0], arrLimits[1], arrLimits[3], arrLimits[2]);
 			}
 		} catch (Exception ex) {
-
+			IJ.error("Failed to read tile configuration file.");
 		}
 	}
 }

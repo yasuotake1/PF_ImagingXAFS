@@ -1,9 +1,7 @@
 package imagingXAFS.common;
 
 import java.awt.Color;
-import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -158,7 +157,7 @@ public class ImagingXAFSCommon implements PlugIn {
 				}
 			}
 		} catch (Exception e) {
-			IJ.error(e.getMessage());
+			logStackTrace(e);
 			return null;
 		}
 		return values;
@@ -392,9 +391,6 @@ public class ImagingXAFSCommon implements PlugIn {
 	}
 
 	public static void logStackTrace(Exception e) {
-		CharArrayWriter caw = new CharArrayWriter();
-		PrintWriter pw = new PrintWriter(caw);
-		e.printStackTrace(pw);
-		IJ.log(caw.toString());
+		(new ImageJ.ExceptionHandler()).handle(e);
 	}
 }
