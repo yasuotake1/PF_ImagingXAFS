@@ -1,0 +1,21 @@
+//=====Example of a macro running BatchJob_DriftCorrRois================================
+//Call this with run("Specify drift correction ROIs...", option);
+//
+//First transmission images (9809 format) [String full path]
+//Reference images (9809 format) or constant [String full path or int]
+//Dark image or constant [String full path or int]
+//=============================================================================
+
+root="D:/";
+arrFirst=newArray(
+"Sinter5_NHJan24_700C_6x7","Sinter5_NHJan24_800C_6x6","Sinter5_NHJan24_900C_6x6_3rd","Sinter5_NHJan24_1000C_7x7","Sinter5_NHJan24_AsSintered_7x9_3rd"
+);
+arrRef=newArray(
+"Ref_02182157","Ref_02182157","Ref_02211022","Ref_02202359","Ref_02201146"
+);
+for(i=0;i<arrFirst.length;i++){
+	firstPath=root+arrFirst[i]+"/"+arrFirst[i]+"_000/"+arrFirst[i]+"_000";
+	refPath=root+arrRef[i]+"/"+arrRef[i];
+	option="first="+firstPath+" reference="+refPath+" dark=400";
+	run("Specify drift correction ROIs...",option);
+}
