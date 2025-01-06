@@ -29,7 +29,7 @@ public class OrcaCommon implements PlugIn {
 	public static int height = 1024;
 	public static int bitDepth = 16;
 
-	public static String PropPath = "plugins/PF_ImagingXAFS/OrcaProps.config";
+	public static String PropPath = IJ.getDir("plugins") + "PF_ImagingXAFS/OrcaProps.config";
 	public static final String[] LIST_BINNING = { "1", "2", "4", "8" };
 	static String strImg = "";
 	static String strRef = "";

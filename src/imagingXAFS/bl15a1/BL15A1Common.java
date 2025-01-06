@@ -33,7 +33,7 @@ public class BL15A1Common implements PlugIn {
 	public static boolean[] listUse = { true, true, false, false, false, false, false, false, false, false, false,
 			false, false, false, false, false };
 	public static String defaultDir = "";
-	public static String propPath = "plugins/PF_ImagingXAFS/BL15A1Props.config";
+	public static String propPath = IJ.getDir("plugins") + "PF_ImagingXAFS/BL15A1Props.config";
 
 	public void run(String arg) {
 	}

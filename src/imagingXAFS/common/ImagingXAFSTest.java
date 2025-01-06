@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
@@ -43,12 +44,7 @@ import imagingXAFS.nw2a_ultra.*;
 public class ImagingXAFSTest implements PlugIn {
 
 	public void run(String arg) {
-		try {
-			String[] arr = new String[5];
-			IJ.log(arr[10]);
-		}catch(Exception e) {
-			ImagingXAFSCommon.logStackTrace(e);
-		}
+		IJ.log(IJ.getDir("plugins"));
+		IJ.log(String.valueOf(Files.exists(Paths.get(IJ.getDir("plugins")+"PF_ImagingXAFS/OrcaProps.config"))));
 	}
-
 }
