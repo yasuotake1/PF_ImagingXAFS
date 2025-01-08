@@ -18,13 +18,14 @@ import imagingXAFS.common.ImagingXAFSCommon;
 public class Load_Ultra2DXANES implements PlugIn {
 
 	public static ImagePlus impStack;
+	private static boolean autoSave = true;
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load UltraXRM 2D XANES");
 		gd.addFileField("ScanInfo file", "");
 		gd.addChoice("Binning", UltraCommon.LIST_BINNING, UltraCommon.LIST_BINNING[0]);
 		gd.addChoice("Mode", UltraCommon.lOADINGMODES, UltraCommon.lOADINGMODES[0]);
-		gd.addCheckbox("Save automatically", true);
+		gd.addCheckbox("Save automatically", autoSave);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -32,7 +33,7 @@ public class Load_Ultra2DXANES implements PlugIn {
 		String pathInfo = gd.getNextString();
 		String strBinning = gd.getNextChoice();
 		int intMode = gd.getNextChoiceIndex();
-		boolean autoSave = gd.getNextBoolean();
+		autoSave = gd.getNextBoolean();
 
 		try {
 			IJ.showStatus("Loading ScanInfo...");
