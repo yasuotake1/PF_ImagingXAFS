@@ -22,8 +22,20 @@ import ij.plugin.PlugIn;
 
 public class BatchJob_Orca implements PlugIn {
 
-	private String strImg9809Path;
-	private String strRef9809Path;
+	private static String strImg9809Path;
+	private static String strRef9809Path;
+	private static boolean saveStack = false;
+	private static boolean driftCorr = false;
+	private static boolean filter = false;
+	private static boolean zeroSlope = false;
+	private static double threshold = 2.0;
+	private static boolean statsImages = false;
+	private static boolean doSVD = true;
+	private static boolean bClip = true;
+	private static boolean bCopy = true;
+	private static boolean bStitch = true;
+	private static boolean bComplement = false;
+	private static boolean showStitched = true;
 
 	public void run(String arg) {
 		boolean macroMode = arg.equalsIgnoreCase("macro");
@@ -36,29 +48,29 @@ public class BatchJob_Orca implements PlugIn {
 		gd.addChoice("Binning", OrcaCommon.LIST_BINNING, OrcaCommon.strBinning);
 		gd.addNumericField("Energy offset", OrcaCommon.ofsEne, 2);
 		gd.addCheckbox("I0 correction", Load_OrcaStack.getI0Corr());
-		gd.addCheckbox("Save stack files", false);
+		gd.addCheckbox("Save stack files", saveStack);
 		gd.addMessage("Preprocess:");
-		gd.addCheckbox("Drift correction (Requires specified ROI list)", false);
-		gd.addCheckbox("Apply 3D Gaussian blur", false);
+		gd.addCheckbox("Drift correction (Requires specified ROI list)", driftCorr);
+		gd.addCheckbox("Apply 3D Gaussian blur", filter);
 		gd.addMessage("Normalization:");
 		gd.addNumericField("Pre-edge from", ImagingXAFSCommon.normalizationParam[0], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[1], 2, 8, "eV");
 		gd.addNumericField("Post-edge from", ImagingXAFSCommon.normalizationParam[2], 2, 8, "eV");
 		gd.addNumericField("to", ImagingXAFSCommon.normalizationParam[3], 2, 8, "eV");
-		gd.addCheckbox("Zero-slope pre-edge", false);
-		gd.addNumericField("Filter threshold", 2.0, 1);
-		gd.addNumericField("Normalized absorbance at E0", 0.5, 2);
+		gd.addCheckbox("Zero-slope pre-edge", zeroSlope);
+		gd.addNumericField("Filter threshold", threshold, 1);
+		gd.addNumericField("Normalized absorbance at E0", ImagingXAFSCommon.e0Jump, 2);
 		gd.addNumericField("E0 plot range minimum", ImagingXAFSCommon.e0Min, 2, 8, "eV");
 		gd.addNumericField("maximum", ImagingXAFSCommon.e0Max, 2, 8, "eV");
-		gd.addCheckbox("Create statistics images", false);
+		gd.addCheckbox("Create statistics images", statsImages);
 		gd.addMessage("Singular value decomposition:");
-		gd.addCheckbox("Perform_SVD", true);
-		gd.addCheckbox("Clip at zero", true);
+		gd.addCheckbox("Perform_SVD", doSVD);
+		gd.addCheckbox("Clip at zero", bClip);
 		gd.addMessage("Postprocess:");
-		gd.addCheckbox("Copy files for stitching", true);
-		gd.addCheckbox("Perform_grid_stitching", true);
-		gd.addCheckbox("Complement tile positions of refinement failure", false);
-		gd.addCheckbox("Show stitched images", true);
+		gd.addCheckbox("Copy files for stitching", bCopy);
+		gd.addCheckbox("Perform_grid_stitching", bStitch);
+		gd.addCheckbox("Complement tile positions of refinement failure", bComplement);
+		gd.addCheckbox("Show stitched images", showStitched);
 		if (macroMode) {
 			gd.addNumericField("Crop_x", 0, 1);
 			gd.addNumericField("Crop_y", 0, 1);
@@ -95,9 +107,9 @@ public class BatchJob_Orca implements PlugIn {
 		OrcaCommon.strBinning = gd.getNextChoice();
 		OrcaCommon.ofsEne = gd.getNextNumber();
 		boolean i0Corr = gd.getNextBoolean();
-		boolean saveStack = gd.getNextBoolean();
-		boolean driftCorr = gd.getNextBoolean();
-		boolean filter = gd.getNextBoolean();
+		saveStack = gd.getNextBoolean();
+		driftCorr = gd.getNextBoolean();
+		filter = gd.getNextBoolean();
 		double[] energy = ImagingXAFSCommon.readEnergies(strImg9809Path);
 		if (OrcaCommon.ofsEne <= -0.01 || OrcaCommon.ofsEne >= 0.01) {
 			for (int i = 0; i < energy.length; i++) {
@@ -110,9 +122,9 @@ public class BatchJob_Orca implements PlugIn {
 		double postStart = gd.getNextNumber();
 		double postEnd = gd.getNextNumber();
 		ImagingXAFSCommon.normalizationParam = new double[] { preStart, preEnd, postStart, postEnd };
-		boolean zeroSlope = gd.getNextBoolean();
-		float threshold = (float) gd.getNextNumber();
-		float e0Jump = (float) gd.getNextNumber();
+		zeroSlope = gd.getNextBoolean();
+		threshold = gd.getNextNumber();
+		double e0Jump = gd.getNextNumber();
 		if (e0Jump < 0 || e0Jump > 1) {
 			IJ.error("Normalized absorbance at E0 must be within 0 and 1.");
 			return;
@@ -123,16 +135,16 @@ public class BatchJob_Orca implements PlugIn {
 			IJ.error("Invalid E0 minimum and/or maximum.");
 			return;
 		}
-		ImagingXAFSCommon.e0Jump = e0Jump;
+		ImagingXAFSCommon.e0Jump = (float) e0Jump;
 		ImagingXAFSCommon.e0Min = e0Min;
 		ImagingXAFSCommon.e0Max = e0Max;
-		boolean statsImages = gd.getNextBoolean();
-		boolean doSVD = gd.getNextBoolean();
-		boolean clip = gd.getNextBoolean();
-		boolean copy = gd.getNextBoolean();
-		boolean stitch = gd.getNextBoolean();
-		boolean complement = gd.getNextBoolean();
-		boolean showStitched = gd.getNextBoolean();
+		statsImages = gd.getNextBoolean();
+		doSVD = gd.getNextBoolean();
+		bClip = gd.getNextBoolean();
+		bCopy = gd.getNextBoolean();
+		bStitch = gd.getNextBoolean();
+		bComplement = gd.getNextBoolean();
+		showStitched = gd.getNextBoolean();
 		int cropX = macroMode ? (int) gd.getNextNumber() : 0;
 		int cropY = macroMode ? (int) gd.getNextNumber() : 0;
 		int cropWidth = macroMode ? (int) gd.getNextNumber() : 0;
@@ -240,7 +252,7 @@ public class BatchJob_Orca implements PlugIn {
 		String dirStitch = OrcaCommon.getStrGrandParent(first9809Path) + "/stitching";
 		ArrayList<String> sufList = new ArrayList<String>();
 		Stitching sti = new Stitching();
-		if (copy) {
+		if (bCopy) {
 			if (!Files.exists(Paths.get(dirStitch))) {
 				try {
 					Files.createDirectory(Paths.get(dirStitch));
@@ -250,7 +262,7 @@ public class BatchJob_Orca implements PlugIn {
 				}
 			}
 		}
-		if (stitch) {
+		if (bStitch) {
 			if (macroMode) {
 				sti.setWithoutDialog(gridOrder, gridSizeX, gridSizeY, tileOverlap);
 			} else {
@@ -295,20 +307,20 @@ public class BatchJob_Orca implements PlugIn {
 				IJ.log("\\Update:Applying filter...done.");
 			}
 			impCorr.show();
-			Normalization.Normalize(impCorr, zeroSlope, threshold, false, statsImages, true, saveStack);
+			Normalization.Normalize(impCorr, zeroSlope, (float) threshold, false, statsImages, true, saveStack);
 			impNorm = Normalization.impNorm;
 			impDmut = Normalization.impDmut;
-			if (clip) {
+			if (bClip) {
 				Clip_Values.ClipValues(impDmut, 5F, 0F, 0F, false);
 				IJ.saveAsTiff(impDmut, impCorr.getOriginalFileInfo().directory + impDmut.getTitle());
 			}
 			if (doSVD) {
 				SVD.setDataMatrix(impNorm);
 				SVD.performSVD(true);
-				SVD.showResults(impDmut, clip, false, true, true);
+				SVD.showResults(impDmut, bClip, false, true, true);
 			}
 
-			if (copy) {
+			if (bCopy) {
 				if (i == 0) {
 					sufList.add("_LastImage.tif");
 					sufList.add("_Dmut.tif");
@@ -349,13 +361,13 @@ public class BatchJob_Orca implements PlugIn {
 		}
 
 		strImg9809Path = first9809Path;
-		if (stitch) {
+		if (bStitch) {
 			if (!sti.register(dirStitch + "/" + getImg9809Name() + sufList.get(0))) {
 				IJ.error("Failed to calculate stitching configuration.");
 				return;
 			}
 
-			if (complement) {
+			if (bComplement) {
 				sti.doComplement();
 			}
 			ImagePlus impCurrent;

@@ -13,6 +13,7 @@ import ij.io.OpenDialog;
 import ij.plugin.ImageCalculator;
 import ij.plugin.PlugIn;
 import ij.process.ImageConverter;
+import ij.process.ImageStatistics;
 
 public class Load_OrcaStack implements PlugIn {
 
@@ -24,6 +25,7 @@ public class Load_OrcaStack implements PlugIn {
 			+ "Select a 9809 file for Reference file field to calculate absorbance, or enter an integer value to use constant I0."
 			+ "\nSelect an image file for Dark file field to subtract dark image, or enter an integer value to subtract constant."
 			+ "\nMultiple dark images (*_dk[0-9].img) are searched for automatically.";
+	public static double issc=0.0;// test 20250402
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Load ORCA-Flash imagestack");
@@ -37,6 +39,7 @@ public class Load_OrcaStack implements PlugIn {
 		gd.addCheckbox("I0 correction", i0Corr);
 		gd.addCheckbox("Energy correction", eneCorr);
 		gd.addCheckbox("Save stack files", autoSave);
+		gd.addNumericField("Intra-scintillator scattering correction", issc, 3);// test 20250402
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -55,6 +58,7 @@ public class Load_OrcaStack implements PlugIn {
 		i0Corr = gd.getNextBoolean();
 		eneCorr = gd.getNextBoolean();
 		autoSave = gd.getNextBoolean();
+		issc=gd.getNextNumber();// test 20250402
 		load(strImg9809, strRef9809);
 	}
 
@@ -108,6 +112,12 @@ public class Load_OrcaStack implements PlugIn {
 			IJ.showStatus("Loading image " + String.format(intImg.length > 999 ? "%04d" : "%03d", i));
 			IJ.showProgress(i, energies.length);
 			impImg = OrcaCommon.loadOrca(strImg, prop, true);
+			// test 20250402
+			if(issc>0.0) {
+				ImageStatistics is = ImageStatistics.getStatistics(impImg.getProcessor());
+				impImg.getProcessor().subtract(issc*is.mean);				
+			}
+			// test 20250402
 			if (multi) {
 				j = 0;
 				arrInt = new int[((short[]) impImg.getProcessor().getPixels()).length];
