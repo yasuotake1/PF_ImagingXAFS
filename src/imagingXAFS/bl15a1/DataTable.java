@@ -1,4 +1,5 @@
 package imagingXAFS.bl15a1;
+import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,21 +41,30 @@ public class DataTable implements PlugIn {
 				rawData[j][i] = Long.parseLong(strSplit[j].trim()); //2D data table, transposed from original file content.
 			}
 		}
-		long startX = rawData[idxX][0];
 		long[] uniqueX = Arrays.stream(rawData[idxX]).distinct().toArray();
-		long endX = uniqueX[uniqueX.length - 1];
 		long stepX = uniqueX[1] - uniqueX[0];
 		int numX = uniqueX.length;
-		long startY = rawData[idxY][0];
+		long startX = uniqueX[0];
+		long endX = uniqueX[0];
+		for(int i=0;i<uniqueX.length;i++) {
+			startX=(stepX>0?uniqueX[i]<startX:uniqueX[i]>startX)?uniqueX[i]:startX;
+			endX=(stepX>0?uniqueX[i]>endX:uniqueX[i]<endX)?uniqueX[i]:endX;
+		}
 		long[] uniqueY = Arrays.stream(rawData[idxY]).distinct().toArray();
-		long endY = uniqueY[uniqueY.length - 1];
 		long stepY = uniqueY[1] - uniqueY[0];
 		int numY = uniqueY.length;
+		long startY = uniqueY[0];
+		long endY = uniqueY[0];
+		for(int i=0;i<uniqueY.length;i++) {
+			startY=(stepY>0?uniqueY[i]<startY:uniqueY[i]>startY)?uniqueY[i]:startY;
+			endY=(stepY>0?uniqueY[i]>endY:uniqueY[i]<endY)?uniqueY[i]:endY;
+		}
 		arrIdxX = new int[countRow];
 		arrIdxY = new int[countRow];
 		for(int i=0; i<countRow; i++) {
 			arrIdxX[i] = (int)((rawData[idxX][i] - startX) / stepX);
 			arrIdxY[i] = (int)((rawData[idxY][i] - startY) / stepY);
+			IJ.log("IdxX="+arrIdxX[i]+",IdxY="+arrIdxY[i]);
 		}
 		strScanInfo = "Axis 1: \"" + labelX + "\"";
 		strScanInfo += "\nStart=" + Long.toString(startX) + ", End=" + Long.toString(endX) + ", Step=" + Long.toString(stepX) + ", Points=" + Integer.toString(numX);
