@@ -18,56 +18,90 @@ public class AlphaImage_Interactive implements PlugIn, DialogListener {
 	ImageProcessor ipE0, ipE0RGB, ipDmut, ipDmutByte;
 	ImagePlus impPreview = null;
 	static int previewWidth = 600;
+	static String strBg = choiceBg[0];
+	static double gamma = 1.0;
 
 	public void run(String arg) {
-		previewWidth = ImagingXAFSCommon.getCurrentScreenWidth() / 3;
+		boolean macroMode = arg.equalsIgnoreCase("macro");
+		String nameResult = "";
+		double minE0, maxE0, minDmut, maxDmut;
 
-		listId = ImagingXAFSCommon.getDataIds(false);
-		if (listId.length < 2) {
-			IJ.error("Could not find data image(s).");
-			return;
+		if (macroMode) {
+			GenericDialog gd = new GenericDialog("Make E0 @Color - Dmut @alpha channel image");
+			gd.addStringField("E0Image", "");
+			gd.addNumericField("E0Min", 0.0);
+			gd.addNumericField("E0Max", 1.0);
+			gd.addStringField("DmutImage", "");
+			gd.addNumericField("DmutMin", 0.0);
+			gd.addNumericField("DmutMax", 1.0);
+			gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
+			gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
+			gd.showDialog();
+
+			nameResult = gd.getNextString();
+			ipE0 = WindowManager.getImage(nameResult).getProcessor();
+			minE0 = gd.getNextNumber();
+			maxE0 = gd.getNextNumber();
+			ipDmut = WindowManager.getImage(gd.getNextString()).getProcessor();
+			minDmut = gd.getNextNumber();
+			maxDmut = gd.getNextNumber();
+			strBg = gd.getNextRadioButton();
+			gamma = gd.getNextNumber();
+		} else {
+			previewWidth = ImagingXAFSCommon.getCurrentScreenWidth() / 3;
+
+			listId = ImagingXAFSCommon.getDataIds(false);
+			if (listId.length < 2) {
+				IJ.error("Could not find data image(s).");
+				return;
+			}
+			String[] listTitle = ImagingXAFSCommon.getDataTitles(false);
+			ipE0 = WindowManager.getImage(listId[0]).getProcessor().resize(previewWidth);
+			ipE0RGB = ipE0.convertToRGB();
+			ipDmut = WindowManager.getImage(listId[1]).getProcessor().resize(previewWidth);
+			ipDmutByte = ipDmut.convertToByte(true);
+			impPreview = new ImagePlus("Preview", ipE0RGB.duplicate());
+
+			GenericDialog gd = new GenericDialog("Make E0 @Color - Dmut @alpha channel image");
+			gd.addChoice("E0: Image", listTitle, listTitle[0]);
+			gd.addNumericField("Display range minimum", ipE0.getMin(), 2, 8, "eV");
+			gd.addNumericField("Maximum", ipE0.getMax(), 2, 8, "eV");
+			gd.addChoice("Dmut: Image", listTitle, listTitle[1]);
+			gd.addNumericField("Display range minimum", ipDmut.getMin(), 3);
+			gd.addNumericField("Maximum", ipDmut.getMax(), 3);
+			gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
+			gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
+			gd.addCheckbox("Preview", false);
+			gd.addDialogListener(this);
+			gd.showDialog();
+			if (impPreview.isVisible())
+				impPreview.close();
+			if (gd.wasCanceled())
+				return;
+
+			int idE0 = listId[gd.getNextChoiceIndex()];
+			minE0 = gd.getNextNumber();
+			maxE0 = gd.getNextNumber();
+			int idDmut = listId[gd.getNextChoiceIndex()];
+			minDmut = gd.getNextNumber();
+			maxDmut = gd.getNextNumber();
+			strBg = gd.getNextRadioButton();
+			gamma = gd.getNextNumber();
+
+			ipE0 = WindowManager.getImage(idE0).getProcessor();
+			ipDmut = WindowManager.getImage(idDmut).getProcessor();
+			nameResult = WindowManager.getImage(idE0).getTitle();
 		}
-		String[] listTitle = ImagingXAFSCommon.getDataTitles(false);
-		ipE0 = WindowManager.getImage(listId[0]).getProcessor().resize(previewWidth);
-		ipE0RGB = ipE0.convertToRGB();
-		ipDmut = WindowManager.getImage(listId[1]).getProcessor().resize(previewWidth);
-		ipDmutByte = ipDmut.convertToByte(true);
-		impPreview = new ImagePlus("Preview", ipE0RGB.duplicate());
 
-		GenericDialog gd = new GenericDialog("Make E0 @Color - Dmut @alpha channel image");
-		gd.addChoice("E0: Image", listTitle, listTitle[0]);
-		gd.addNumericField("Display range minimum", ipE0.getMin(), 2, 8, "eV");
-		gd.addNumericField("Maximum", ipE0.getMax(), 2, 8, "eV");
-		gd.addChoice("Dmut: Image", listTitle, listTitle[1]);
-		gd.addNumericField("Display range minimum", ipDmut.getMin(), 3);
-		gd.addNumericField("Maximum", ipDmut.getMax(), 3);
-		gd.addRadioButtonGroup("Background", choiceBg, 1, 2, choiceBg[0]);
-		gd.addSlider("Gamma", 0.5, 2, 1.0, 0.05);
-		gd.addCheckbox("Preview", false);
-		gd.addDialogListener(this);
-		gd.showDialog();
-		if (impPreview.isVisible())
-			impPreview.close();
-		if (gd.wasCanceled())
-			return;
-
-		int idE0 = listId[gd.getNextChoiceIndex()];
-		double minE0 = gd.getNextNumber();
-		double maxE0 = gd.getNextNumber();
-		int idDmut = listId[gd.getNextChoiceIndex()];
-		double minDmut = gd.getNextNumber();
-		double maxDmut = gd.getNextNumber();
-		if (Double.isNaN(minE0) || Double.isNaN(maxE0) || Double.isNaN(minDmut) || Double.isNaN(maxDmut)) {
-			IJ.error("Invalid display range.");
-			return;
-		}
-		ipE0 = WindowManager.getImage(idE0).getProcessor();
-		ipDmut = WindowManager.getImage(idDmut).getProcessor();
 		if (!isSameSize()) {
 			IJ.error("E0 and Dmut images have different size.");
 			return;
 		}
-		
+		if (Double.isNaN(minE0) || Double.isNaN(maxE0) || Double.isNaN(minDmut) || Double.isNaN(maxDmut)) {
+			IJ.error("Invalid display range.");
+			return;
+		}
+
 		IJ.log("Making E0 @Color - Dmut @alpha channel image...");
 		IJ.log("    E0: " + String.format("%.2f", minE0) + " - " + String.format("%.2f", maxE0) + " eV");
 		IJ.log("    Dmut: " + String.format("%.3f", minDmut) + " - " + String.format("%.3f", maxDmut));
@@ -75,21 +109,19 @@ public class AlphaImage_Interactive implements PlugIn, DialogListener {
 		ipE0RGB = ipE0.convertToRGB();
 		ipDmut.setMinAndMax(minDmut, maxDmut);
 		ipDmutByte = ipDmut.convertToByte(true);
-		String strBg = gd.getNextRadioButton();
-		double gamma = gd.getNextNumber();
-
-		String nameResult = WindowManager.getImage(idE0).getTitle();
 		if (nameResult.endsWith(".tif"))
-			nameResult = nameResult.replace(".tif", "_" + strBg + ".png");
+			nameResult = nameResult.replace(".tif", "_" + strBg);
 		else
-			nameResult += "_" + strBg + ".png";
-
+			nameResult += "_" + strBg;
 		ImagePlus impResult = new ImagePlus(nameResult, ipE0RGB.duplicate());
 		setAlphaImagePixels(gamma, strBg == choiceBg[0], (int[]) impResult.getProcessor().getPixels());
 		impResult.show();
-		IJ.log("Saving...");
-		IJ.saveAs(impResult, "png", null);
-		IJ.log("\\Update:Saving...done.");
+
+		if (!macroMode) {
+			IJ.log("Saving...");
+			IJ.saveAs(impResult, "png", null);
+			IJ.log("\\Update:Saving...done.");
+		}
 	}
 
 	@Override
